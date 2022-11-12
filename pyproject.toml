@@ -1,0 +1,45 @@
+[project]
+name = "cloudtile"
+description = """
+    Python package to upload and execute conversion between geospatial into
+    vectortile files in the cloud.
+    """
+readme = "README.md"
+requires-python = ">=3.9"
+version = "0.0.1"
+authors = [
+    {name = "Dylan Halpern", email = "dhalpern@uchicago.edu"},
+    {name = "Nicholas Marchio", email = "nmarchio@uchicago.edu"},
+    {name = "Manuel Martinez", email = "manmart@uchicago.edu"}
+]
+dynamic = ["dependencies", "optional-dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+optional-dependencies = {dev = {file = "dev-requirements.txt"}}
+
+[project.urls]
+repository = "https://github.com/mansueto-institute/cloudtile"
+
+[build-system]
+requires = ['setuptools']
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+# household-pulse = "household_pulse.__main__:main"
+
+[tool.black]
+line-length = 79
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = [
+    "--cov=cloudtile",
+    "--cov-branch",
+    "--cov-report=term-missing",
+    "--cov-report=xml:coverage.xml",
+    "--junitxml=coverage-junit.xml",
+    "--durations=5"
+]
