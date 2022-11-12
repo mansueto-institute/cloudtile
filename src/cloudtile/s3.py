@@ -16,6 +16,7 @@ from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -65,16 +66,24 @@ class S3Storage:
         """
         fpath = self._resolve_path(file_path=file_path)
         checksum = self._md5_checksum(file_path=fpath)
+
         s3_client = self.s3_client
 
         if not self._check_file_equality(file_path=fpath, checksum=checksum):
             try:
-                s3_client.upload_file(
-                    str(fpath),
-                    self.bucket_name,
-                    self._make_rawpath(fpath),
-                    ExtraArgs={"Metadata": {"md5": checksum}},
-                )
+                with tqdm(
+                    total=fpath.stat().st_size,
+                    unit="B",
+                    unit_scale=True,
+                    desc=f"Uploading {fpath.name}",
+                ) as t:
+                    s3_client.upload_file(
+                        str(fpath),
+                        self.bucket_name,
+                        self._make_rawpath(fpath),
+                        ExtraArgs={"Metadata": {"md5": checksum}},
+                        Callback=self._tqdm_hook(t),
+                    )
             except ClientError as e:
                 logger.error(e)
 
@@ -108,6 +117,9 @@ class S3Storage:
             return False
 
         except ClientError as e:
+            ecode = e.response["Error"]["Code"]
+            if ecode == "404":
+                return False
             logger.error(e)
             raise e from e
 
@@ -171,3 +183,10 @@ class S3Storage:
             logger.error(error_msg)
             raise FileNotFoundError(error_msg)
         return fpath
+
+    @staticmethod
+    def _tqdm_hook(t):
+        def inner(bytes_ammount):
+            t.update(bytes_ammount)
+
+        return inner
