@@ -36,7 +36,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 addopts = [
-    "--cov=household_pulse",
+    "--cov=cloudtile",
     "--cov-branch",
     "--cov-report=term-missing",
     "--cov-report=xml:coverage.xml",
