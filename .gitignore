@@ -1,3 +1,6 @@
+# testing files
+coverage-junit.xml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
