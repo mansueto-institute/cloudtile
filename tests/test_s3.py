@@ -118,7 +118,7 @@ class TestMethods:
     def test_check_file_eq(mock_storage: S3Storage):
         mock_storage.create_bucket()
         mock_storage.upload_file("LICENSE")
-        checksum = "e62637ea8a114355b985fd86c9ffbd6e"
+        checksum = "1ebbd3e34237af26da5dc08a4e440464"
         assert mock_storage._check_file_equality(
             Path("LICENSE"), checksum=checksum
         )
@@ -160,7 +160,7 @@ class TestMethods:
     def test_md5_checksum(mock_storage: S3Storage):
         path = Path("LICENSE")
         checksum = mock_storage._md5_checksum(path)
-        assert checksum == "e62637ea8a114355b985fd86c9ffbd6e"
+        assert checksum == "1ebbd3e34237af26da5dc08a4e440464"
 
     @staticmethod
     def test_resolve_path(mock_storage: S3Storage):
