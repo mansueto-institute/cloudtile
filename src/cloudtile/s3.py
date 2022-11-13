@@ -86,6 +86,7 @@ class S3Storage:
                     )
             except ClientError as e:
                 logger.error(e)
+                raise e from e
 
     def _check_file_equality(self, file_path: Path, checksum: str) -> bool:
         """
@@ -185,7 +186,7 @@ class S3Storage:
         return fpath
 
     @staticmethod
-    def _tqdm_hook(t):
+    def _tqdm_hook(t):  # pragma: no cover
         def inner(bytes_ammount):
             t.update(bytes_ammount)
 
