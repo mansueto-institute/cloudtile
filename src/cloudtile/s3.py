@@ -9,6 +9,7 @@ Created on Saturday, 12th November 2022 1:06:43 pm
 ===============================================================================
 """
 import logging
+import tempfile
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
@@ -51,6 +52,50 @@ class S3Storage:
             else:
                 logger.error(e)
                 raise e from e
+
+    def download_file(self, file_key: str) -> Path:
+        """
+        Downloads a file from the cloudtile-files bucket into a temporary
+        file in the system. The responsibility of deleting the file remains
+        on the user.
+
+        Args:
+            file_key (str): the file key to download from S3.
+
+        Returns:
+            Path: A local path to the downloaded file.
+        """
+        if "." not in file_key:
+            raise ValueError("You must specify the file suffix")
+
+        _, tmpfile = tempfile.mkstemp(
+            suffix="".join((".", file_key.split(".")[-1]))
+        )
+        s3_client = self.s3_client
+
+        try:
+            s3 = boto3.resource("s3")
+            file_object = s3.Object(self.bucket_name, file_key)
+            filesize = file_object.content_length
+
+            with tqdm(
+                total=filesize,
+                unit="B",
+                unit_scale=True,
+                desc=f"Downloading {file_key}",
+            ) as t:
+                s3_client.download_file(
+                    self.bucket_name,
+                    file_key,
+                    tmpfile,
+                    Callback=self._tqdm_hook(t),
+                )
+
+        except ClientError as e:
+            logger.error(e)
+            raise e from e
+
+        return Path(tmpfile)
 
     def upload_file(self, file_path: str) -> None:
         """
