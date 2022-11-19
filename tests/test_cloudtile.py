@@ -14,3 +14,7 @@ Created on Saturday, 12th November 2022 12:50:58 pm
 
 def test_import_cloudtile():
     import cloudtile  # noqa: F401
+
+
+def test_import_s3():
+    from cloudtile import s3  # noqa: F401
