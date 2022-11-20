@@ -40,7 +40,6 @@ class GeoFile(ABC):
         self.fname = self.fpath.name
 
     @classmethod
-    @abstractmethod
     def from_s3(cls, file_key: str) -> GeoFile:
         """
         Downloads the geofile from S3
@@ -51,6 +50,18 @@ class GeoFile(ABC):
         Returns:
             GeoFile: A GeoFile instance.
         """
+        fpath = Path(file_key)
+        s3 = S3Storage()
+        tmp_path = s3.download_file(file_key=file_key, prefix=fpath.suffix[1:])
+        result = cls(str(tmp_path))
+        result.fname = file_key
+        return result
+
+    def upload(self) -> None:
+        """
+        Uploads a local file to S3.
+        """
+        # !set prefix as an object attribute for navigating the S3 bucket
 
     @abstractmethod
     def convert(self) -> GeoFile:
@@ -59,12 +70,6 @@ class GeoFile(ABC):
 
         Returns:
             GeoFile: Some other subclass of GeoFile.
-        """
-
-    @abstractmethod
-    def upload(self) -> None:
-        """
-        Uploads a local file to S3.
         """
 
     def remove(self):
@@ -79,14 +84,6 @@ class GeoPackage(GeoFile):
     """
     Class that represents a geopackage file.
     """
-
-    @classmethod
-    def from_s3(cls, file_key: str):
-        s3 = S3Storage()
-        tmp_path = s3.download_file(file_key=file_key, prefix="gpkg")
-        result = cls(str(tmp_path))
-        result.fname = file_key
-        return result
 
     def upload(self) -> None:
         s3 = S3Storage()
@@ -115,15 +112,47 @@ class FlatGeobuf(GeoFile):
     Class that represents a FlatGeobuf file.
     """
 
-    @classmethod
-    def from_s3(cls, file_key: str):
-        s3 = S3Storage()
-        tmp_path = s3.download_file(file_key=file_key, prefix="fgb")
-        return cls(str(tmp_path))
-
     def upload(self) -> None:
         s3 = S3Storage()
-        s3.upload_file(file_path=self.fname, prefix="fgb")
+        s3.upload_file(
+            file_path=str(self.fpath), prefix="fgb", key_name=self.fname
+        )
 
-    def convert(self) -> GeoFile:
-        return FlatGeobuf("test.fgb")
+    def convert(self) -> MBTiles:
+        out_path = Path(
+            self.fpath.parent.joinpath(self.fpath.stem + ".mbtiles")
+        )
+        tip_args = (
+            "tippecanoe",
+            "--read-parallel",
+            "--maximum-zoom=9",
+            "--minimum-zoom=8",
+            "--coalesce-densest-as-needed",
+            "--simplification=10",
+            "--maximum-tile-bytes=2500000",
+            "--no-tile-compression",
+            "-o",
+            out_path,
+            self.fpath,
+        )
+        subprocess.run(tip_args, check=True)
+        result = MBTiles(str(out_path), 8, 9)
+        result.fname = self.fname
+        result.fname = result.fname.replace(".fgb", ".mbtiles")
+        return result
+
+
+@dataclass
+class MBTiles(GeoFile):
+    """
+    Class that represents a MBTiles tileset file.
+    """
+
+    min_zoom: int
+    max_zoom: int
+
+    def convert(self):
+        pass
+
+    def upload(self):
+        pass
