@@ -30,7 +30,7 @@ def convert(origin_str: str, remote: bool = False) -> None:
         if remote:
             origin = FlatGeobuf.from_s3(file_key=origin_str)
         else:
-            origin = FlatGeobuf(fpath_str=origin)
+            origin = FlatGeobuf(fpath_str=origin_str)
 
     result = origin.convert()
     result.upload()
