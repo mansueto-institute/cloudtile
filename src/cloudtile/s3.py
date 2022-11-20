@@ -13,7 +13,7 @@ import tempfile
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import boto3
 from botocore.exceptions import ClientError
@@ -99,7 +99,9 @@ class S3Storage:
 
         return Path(tmpfile)
 
-    def upload_file(self, file_path: str, prefix: str = "") -> None:
+    def upload_file(
+        self, file_path: str, prefix: str = "", key_name: Optional[str] = None
+    ) -> None:
         """
         Upload a file in the local machine to the cloudtile-files/raw path in
         S3. If the bucket doesn't exist, you should create it first. We first
@@ -110,15 +112,25 @@ class S3Storage:
 
         Args:
             file_path (str): Either the absolute or relative path to the file.
+            prefix (str): the file prefix, such as "raw" or "gpkg"
+            key_name (Optional[str], optional): Use this instead of the
+                local file path name as the key in the S3 bucket.
         """
         fpath = self._resolve_path(file_path=file_path)
         checksum = self._md5_checksum(file_path=fpath)
 
         s3_client = self.s3_client
 
-        if not self._check_file_equality(
+        exists: bool = self._check_file_equality(
             file_path=fpath, checksum=checksum, prefix=prefix
-        ):
+        )
+
+        if key_name is None:
+            key_name = self._add_prefix(prefix=prefix, file_path=fpath)
+        else:
+            key_name = "/".join((prefix, key_name))
+
+        if not exists:
             try:
                 with tqdm(
                     total=fpath.stat().st_size,
@@ -129,7 +141,7 @@ class S3Storage:
                     s3_client.upload_file(
                         str(fpath),
                         self.bucket_name,
-                        self._add_prefix(prefix=prefix, file_path=fpath),
+                        key_name,
                         ExtraArgs={"Metadata": {"md5": checksum}},
                         Callback=self._tqdm_hook(t),
                     )
