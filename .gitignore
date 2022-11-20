@@ -1,3 +1,9 @@
+# data files
+*.gpkg
+*.fgb
+*.mbtiles
+*.pmtiles
+
 # testing files
 coverage-junit.xml
 
