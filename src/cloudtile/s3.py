@@ -121,14 +121,14 @@ class S3Storage:
 
         s3_client = self.s3_client
 
-        exists: bool = self._check_file_equality(
-            file_path=fpath, checksum=checksum, prefix=prefix
-        )
-
         if key_name is None:
             key_name = self._add_prefix(prefix=prefix, file_path=fpath)
         else:
             key_name = "/".join((prefix, key_name))
+
+        exists: bool = self._check_file_equality(
+            file_path=Path(key_name), checksum=checksum, prefix=prefix
+        )
 
         if not exists:
             try:
@@ -136,7 +136,7 @@ class S3Storage:
                     total=fpath.stat().st_size,
                     unit="B",
                     unit_scale=True,
-                    desc=f"Uploading {fpath.name}",
+                    desc=f"Uploading {key_name}",
                 ) as t:
                     s3_client.upload_file(
                         str(fpath),
