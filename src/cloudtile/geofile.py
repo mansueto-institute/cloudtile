@@ -16,6 +16,10 @@ import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+from importlib.resources import open_text
+
+import yaml
 
 from cloudtile.s3 import S3Storage
 
@@ -39,6 +43,40 @@ class GeoFile(ABC):
         self.fpath = fpath
         self.fname = self.fpath.name
 
+    @property
+    def suffix(self) -> str:
+        """
+        The filename's extension, i.e. the "fgb" in "myfile.fgb"
+
+        Returns:
+            str: the file name's suffix.
+        """
+        return self.fpath.suffix[1:]
+
+    @abstractmethod
+    def convert(self) -> GeoFile:
+        """
+        Converts self into the target format and uploads the result into S3.
+
+        Returns:
+            GeoFile: Some other subclass of GeoFile.
+        """
+
+    def upload(self) -> None:
+        """
+        Uploads a local file to S3.
+        """
+        s3 = S3Storage()
+        s3.upload_file(
+            file_path=str(self.fpath), prefix=self.suffix, key_name=self.fname
+        )
+
+    def remove(self):
+        """
+        Removes the local file.
+        """
+        self.fpath.unlink()
+
     @classmethod
     def from_s3(cls, file_key: str) -> GeoFile:
         """
@@ -57,37 +95,12 @@ class GeoFile(ABC):
         result.fname = file_key
         return result
 
-    def upload(self) -> None:
-        """
-        Uploads a local file to S3.
-        """
-        # !set prefix as an object attribute for navigating the S3 bucket
-
-    @abstractmethod
-    def convert(self) -> GeoFile:
-        """
-        Converts self into the target format and uploads the result into S3.
-
-        Returns:
-            GeoFile: Some other subclass of GeoFile.
-        """
-
-    def remove(self):
-        """
-        Removes the local file.
-        """
-        self.fpath.unlink()
-
 
 @dataclass
 class GeoPackage(GeoFile):
     """
     Class that represents a geopackage file.
     """
-
-    def upload(self) -> None:
-        s3 = S3Storage()
-        s3.upload_file(file_path=self.fname, prefix="gpkg")
 
     def convert(self) -> FlatGeobuf:
         out_path = Path(self.fpath.parent.joinpath(self.fpath.stem + ".fgb"))
@@ -112,12 +125,6 @@ class FlatGeobuf(GeoFile):
     Class that represents a FlatGeobuf file.
     """
 
-    def upload(self) -> None:
-        s3 = S3Storage()
-        s3.upload_file(
-            file_path=str(self.fpath), prefix="fgb", key_name=self.fname
-        )
-
     def convert(self) -> MBTiles:
         out_path = Path(
             self.fpath.parent.joinpath(self.fpath.stem + ".mbtiles")
@@ -130,6 +137,7 @@ class FlatGeobuf(GeoFile):
             "--coalesce-densest-as-needed",
             "--simplification=10",
             "--maximum-tile-bytes=2500000",
+            "--maximum-tile-features=20000",
             "--no-tile-compression",
             "-o",
             out_path,
@@ -140,6 +148,17 @@ class FlatGeobuf(GeoFile):
         result.fname = self.fname
         result.fname = result.fname.replace(".fgb", ".mbtiles")
         return result
+
+    @staticmethod
+    def _read_config() -> dict[str, Any]:
+        with open_text("cloudtile", "tiles_config.yaml") as f:
+            config_dict: dict = yaml.safe_load(f)
+
+        flat_dict = {}
+        for v in config_dict.values():
+            if v is not None:
+                flat_dict.update(v)
+        return flat_dict
 
 
 @dataclass
@@ -152,7 +171,4 @@ class MBTiles(GeoFile):
     max_zoom: int
 
     def convert(self):
-        pass
-
-    def upload(self):
         pass
