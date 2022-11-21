@@ -105,5 +105,5 @@ Progress indicator:
 Output tileset:
   # output: path.mbtiles
   # output-to-directory: ./tmp/directory
-  # force: True
+  force: True
   # allow-existing: True
