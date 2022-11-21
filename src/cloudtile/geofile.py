@@ -125,32 +125,92 @@ class FlatGeobuf(GeoFile):
     Class that represents a FlatGeobuf file.
     """
 
+    _min_zoom: int = field(init=False, repr=False)
+    _max_zoom: int = field(init=False, repr=False)
+
+    @property
+    def min_zoom(self) -> int:
+        """
+        Sets the zoom level used by Tippecanoe.
+
+        Returns:
+            int: The minimum zoom level.
+        """
+        return self._min_zoom
+
+    @min_zoom.setter
+    def min_zoom(self, value: int) -> None:
+        if hasattr(self, "max_zoom"):
+            if value >= self.max_zoom:
+                raise ValueError("min_zoom < max_zoom must be true")
+        self._min_zoom = value
+
+    @property
+    def max_zoom(self) -> int:
+        """
+        Sets the zoom level used by Tippecanoe.
+
+        Returns:
+            int: The maximum zoom level.
+        """
+        return self._max_zoom
+
+    @max_zoom.setter
+    def max_zoom(self, value: int) -> None:
+        if hasattr(self, "min_zoom"):
+            if value <= self.min_zoom:
+                raise ValueError("min_zoom < max_zoom must be true")
+        self._max_zoom = value
+
+    def set_zoom_levels(self, min_zoom: int, max_zoom: int) -> None:
+        """
+        Sets the minimum and maximum zoom levels used by Tippecanoe.
+
+        Args:
+            min_zoom (int): The minimum zoom level.
+            max_zoom (int): The maximum zoom level.
+        """
+        self.min_zoom = min_zoom
+        self.max_zoom = max_zoom
+
     def convert(self) -> MBTiles:
+        if not (hasattr(self, "min_zoom") and hasattr(self, "max_zoom")):
+            raise AttributeError("Must set zoom levels before converting.")
+
         out_path = Path(
             self.fpath.parent.joinpath(self.fpath.stem + ".mbtiles")
         )
-        tip_args = (
-            "tippecanoe",
-            "--read-parallel",
-            "--maximum-zoom=9",
-            "--minimum-zoom=8",
-            "--coalesce-densest-as-needed",
-            "--simplification=10",
-            "--maximum-tile-bytes=2500000",
-            "--maximum-tile-features=20000",
-            "--no-tile-compression",
-            "-o",
-            out_path,
-            self.fpath,
+        tip_args: list[str] = ["tippecanoe"]
+        tip_args.extend(self._convert_to_list_args(self._read_config()))
+        tip_args.extend(
+            [
+                f"--minimum-zoom={self.min_zoom}",
+                f"--maximum-zoom={self.max_zoom}",
+                "-o",
+                str(out_path),
+                str(self.fpath),
+            ]
         )
+
         subprocess.run(tip_args, check=True)
-        result = MBTiles(str(out_path), 8, 9)
+        result = MBTiles(str(out_path), self.min_zoom, self.max_zoom)
         result.fname = self.fname
         result.fname = result.fname.replace(".fgb", ".mbtiles")
         return result
 
+    def _get_fname_w_zooms(self) -> Path:
+        # TODO: gets a new filename with the current zoom levels set.
+        pass
+
     @staticmethod
     def _read_config() -> dict[str, Any]:
+        """
+        Parses a .yaml config file for Tippecanoe.
+
+        Returns:
+            dict[str, Any]: A flat dictionary with the uncommented settings in
+                the .yaml file.
+        """
         with open_text("cloudtile", "tiles_config.yaml") as f:
             config_dict: dict = yaml.safe_load(f)
 
@@ -159,6 +219,26 @@ class FlatGeobuf(GeoFile):
             if v is not None:
                 flat_dict.update(v)
         return flat_dict
+
+    @staticmethod
+    def _convert_to_list_args(args: dict[str, Any]) -> list[str]:
+        """
+        Converts a dictionary of Tippecanoe settings into a list of arguments
+        that can be pased to the CLI call.
+
+        Args:
+            args (dict[str, Any]): Dictionary of Tippecanoe CLI arguments.
+
+        Returns:
+            list[str]: List of CLI string arguments to be passed into the CLI.
+        """
+        result = []
+        for k, v in args.items():
+            if isinstance(v, bool):
+                result.append(f"--{k}")
+            else:
+                result.append(f"--{k}={v}")
+        return result
 
 
 @dataclass
