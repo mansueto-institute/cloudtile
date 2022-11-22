@@ -26,7 +26,7 @@ requires = ['setuptools']
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-# household-pulse = "household_pulse.__main__:main"
+cloudtile = "cloudtile.converter:main"
 
 [tool.black]
 line-length = 79

@@ -46,3 +46,7 @@ def convert(origin_str: str, remote: bool = False, **kwargs) -> None:
     if remote:
         origin.remove()
     result.remove()
+
+
+def main():
+    convert("mali.gpkg", remote=True)
