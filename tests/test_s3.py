@@ -87,7 +87,7 @@ class TestMethods:
     @staticmethod
     def test_upload_file(mock_storage: S3Storage):
         mock_storage.create_bucket()
-        mock_storage.upload_file("LICENSE")
+        mock_storage.upload_file("LICENSE", prefix="raw")
         s3 = mock_storage.s3_client
         obj = s3.get_object(Bucket="cloudtile-files", Key="raw/LICENSE")
         assert "GNU" in obj["Body"].read().decode("utf-8")
@@ -151,10 +151,10 @@ class TestMethods:
             mock_storage._check_file_equality(Path("LICENSE"), "123")
 
     @staticmethod
-    def test_make_rawpath(mock_storage: S3Storage):
+    def test_add_prefix(mock_storage: S3Storage):
         path = Path("LICENSE")
         expected = "raw/LICENSE"
-        assert mock_storage._make_rawpath(path) == expected
+        assert mock_storage._add_prefix("raw", path) == expected
 
     @staticmethod
     def test_md5_checksum(mock_storage: S3Storage):
