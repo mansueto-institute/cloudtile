@@ -193,7 +193,7 @@ class FlatGeobuf(GeoFile):
         )
 
         subprocess.run(tip_args, check=True)
-        result = MBTiles(str(out_path), self.min_zoom, self.max_zoom)
+        result: MBTiles = MBTiles(str(out_path))
         result.fname = self._get_result_fname()
         return result
 
@@ -257,8 +257,28 @@ class MBTiles(GeoFile):
     Class that represents a MBTiles tileset file.
     """
 
-    min_zoom: int
-    max_zoom: int
-
     def convert(self):
-        pass
+        out_path = Path(
+            self.fpath.parent.joinpath(self.fpath.stem + ".pmtiles")
+        )
+        pm_args = (
+            "./pmtiles",
+            "convert",
+            self.fpath,
+            out_path,
+        )
+        subprocess.run(pm_args, check=True)
+        result = PMTiles(str(out_path))
+        result.fname = self.fname
+        result.fname = result.fname.replace(".mbtiles", ".pmtiles")
+        return result
+
+
+@dataclass
+class PMTiles(GeoFile):
+    """
+    Class that represents a PMTiles tileset file.
+    """
+
+    def convert(self) -> GeoFile:
+        raise NotImplementedError("PMTiles conversion is not implemented.")

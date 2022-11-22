@@ -8,7 +8,7 @@ Created on Wednesday, 31st December 1969 7:00:00 pm
 @purpose:   Convert between file types.
 ===============================================================================
 """
-from cloudtile.geofile import GeoPackage, FlatGeobuf
+from cloudtile.geofile import FlatGeobuf, GeoPackage, MBTiles
 
 
 def convert(origin_str: str, remote: bool = False, **kwargs) -> None:
@@ -34,6 +34,11 @@ def convert(origin_str: str, remote: bool = False, **kwargs) -> None:
 
         if isinstance(origin, FlatGeobuf):
             origin.set_zoom_levels(**kwargs)
+    elif origin_str.endswith(".mbtiles"):
+        if remote:
+            origin = MBTiles.from_s3(file_key=origin_str)
+        else:
+            origin = MBTiles(fpath_str=origin_str)
 
     result = origin.convert()
     result.upload()
