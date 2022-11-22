@@ -194,13 +194,23 @@ class FlatGeobuf(GeoFile):
 
         subprocess.run(tip_args, check=True)
         result = MBTiles(str(out_path), self.min_zoom, self.max_zoom)
-        result.fname = self.fname
-        result.fname = result.fname.replace(".fgb", ".mbtiles")
+        result.fname = self._get_result_fname()
         return result
 
-    def _get_fname_w_zooms(self) -> Path:
-        # TODO: gets a new filename with the current zoom levels set.
-        pass
+    def _get_result_fname(self) -> str:
+        """
+        Transforms the fgb filename into an mbtile filename with the
+        conversion zooms in the name.
+
+        Returns:
+            str: The result file name
+        """
+        fname = self.fname
+        fname = fname.replace(".fgb", "")
+        result = "-".join(
+            (fname, str(self.min_zoom), str(self.max_zoom) + ".mbtiles")
+        )
+        return result
 
     @staticmethod
     def _read_config() -> dict[str, Any]:
