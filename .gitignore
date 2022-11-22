@@ -1,3 +1,6 @@
+# go-pmtiles executable
+pmtiles
+
 # data files
 *.gpkg
 *.fgb
