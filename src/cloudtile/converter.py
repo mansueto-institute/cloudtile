@@ -11,7 +11,7 @@ Created on Wednesday, 31st December 1969 7:00:00 pm
 from cloudtile.geofile import GeoPackage, FlatGeobuf
 
 
-def convert(origin_str: str, remote: bool = False) -> None:
+def convert(origin_str: str, remote: bool = False, **kwargs) -> None:
     """
     Converts a file from one type to another and uploads the result into S3.
 
@@ -31,6 +31,9 @@ def convert(origin_str: str, remote: bool = False) -> None:
             origin = FlatGeobuf.from_s3(file_key=origin_str)
         else:
             origin = FlatGeobuf(fpath_str=origin_str)
+
+        if isinstance(origin, FlatGeobuf):
+            origin.set_zoom_levels(**kwargs)
 
     result = origin.convert()
     result.upload()
