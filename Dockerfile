@@ -32,7 +32,6 @@ COPY setup.py setup.py
 COPY requirements.txt requirements.txt
 COPY dev-requirements.txt dev-requirements.txt
 COPY pyproject.toml pyproject.toml
-COPY blocks_SLE.parquet blocks_SLE.parquet
 RUN pip install .
 
 ENTRYPOINT ["cloudtile"]
