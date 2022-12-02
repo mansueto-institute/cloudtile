@@ -25,8 +25,8 @@ jobs:
       - name: Install package
         run: |
           python -m pip install --upgrade pip
+          pip install types-PyYAML
           pip install .[dev]
-          pip install -e .
 
       - name: Lint with flake8
         run: |
