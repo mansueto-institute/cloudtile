@@ -6,6 +6,7 @@ pmtiles
 *.fgb
 *.mbtiles
 *.pmtiles
+*.parquet
 
 # testing files
 coverage-junit.xml
