@@ -18,6 +18,12 @@ dynamic = ["dependencies", "optional-dependencies"]
 dependencies = {file = "requirements.txt"}
 optional-dependencies = {dev = {file = "dev-requirements.txt"}}
 
+[tools.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cloudtile = ["*.yaml"]
+
 [project.urls]
 repository = "https://github.com/mansueto-institute/cloudtile"
 
