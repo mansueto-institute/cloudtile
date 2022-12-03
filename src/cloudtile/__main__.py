@@ -9,10 +9,11 @@ Created on Wednesday, 31st December 1969 6:00:00 pm
 ===============================================================================
 """
 import logging
+import sys
 from argparse import ArgumentParser, _SubParsersAction
 from typing import Optional
 
-from cloudtile.converter import convert
+from cloudtile.converter import Converter
 
 logging.basicConfig(level=logging.INFO)
 
@@ -37,6 +38,7 @@ class CloudTileCLI:
             name="manage",
             help="Subcommands for managing/uploading files to S3",
         )
+        ManageParser.build_parser(self.manage_parser)
 
         self.convert_parser = subparsers.add_parser(
             name="convert", help="File conversion subcommands"
@@ -46,23 +48,33 @@ class CloudTileCLI:
         self.args = parser.parse_args(args)
 
     def main(self):
-        print(self.args)
-        if self.args.subcommand == "manage":
-            raise NotImplementedError("No manage yet")
+        """
+        Main driver method for the CLI which defines the work done by each
+        of the subcommands.
+        """
+        if self.args.subcommand is None:
+            self.parser.print_usage()
+        elif self.args.subcommand == "manage":
+            if self.args.manage_subcommand == "upload":
+                origin = Converter.load_file(
+                    origin_str=self.args.filename, remote=False
+                )
+                origin.upload()
         elif self.args.subcommand == "convert":
             if self.args.convert_subcommand is None:
                 self.convert_parser.print_usage()
+                sys.exit()
 
             if "min_zoom" not in self.args:
                 self.args.min_zoom = None
             if "max_zoom" not in self.args:
                 self.args.max_zoom = None
 
-            convert(
-                origin_str=self.args.filename,
-                remote=self.args.remote,
-                min_zoom=self.args.min_zoom,
-                max_zoom=self.args.max_zoom,
+            converter = Converter(
+                origin_str=self.args.filename, remote=self.args.remote
+            )
+            converter.convert(
+                min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
             )
 
 
@@ -93,7 +105,7 @@ class ConvertParser:
 
     @staticmethod
     def _build_vector2fgb(parser: _SubParsersAction) -> None:
-        vector2fgb = parser.add_parser(  # type: ignore
+        vector2fgb = parser.add_parser(
             name="vector2fgb",
             help="Convert a file using gdal's ogr2ogr",
         )
@@ -147,8 +159,48 @@ class ConvertParser:
         )
 
 
+class ManageParser:
+    """
+    This class represents the manage subparser
+    """
+
+    @classmethod
+    def build_parser(cls, parser: ArgumentParser) -> None:
+        """
+        Builds the manage subparser
+
+        Args:
+            parser (ArgumentParser): _description_
+
+        Returns:
+            ArgumentParser: _description_
+        """
+        subparsers = parser.add_subparsers(
+            dest="manage_subcommand",
+            help="The management actions available",
+            metavar="management",
+        )
+        cls._build_upload_parser(subparsers)
+
+    @staticmethod
+    def _build_upload_parser(parser: _SubParsersAction) -> None:
+        upload = parser.add_parser(
+            name="upload",
+            help="Uploads a local file to S3",
+        )
+        upload.add_argument(
+            "filename",
+            help=(
+                "Absolute or relative path to local file that you wish "
+                "to upload to S3"
+            ),
+            metavar="filename",
+        )
+
+
 def main() -> None:
     """
     Main driver method for the CLI.
     """
-    CloudTileCLI().main()
+    cli = CloudTileCLI()
+    cli.main()
