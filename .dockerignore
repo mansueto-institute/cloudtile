@@ -1,6 +1,7 @@
-# cdk
+# comment
 cdk.out
 .cdk.staging
+.git
 
 # go-pmtiles executable
 pmtiles
