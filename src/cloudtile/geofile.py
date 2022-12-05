@@ -16,7 +16,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from importlib.resources import open_text
 
 import yaml
@@ -97,10 +97,22 @@ class GeoFile(ABC):
 
 
 @dataclass
-class GeoPackage(GeoFile):
+class VectorFile(GeoFile):
     """
-    Class that represents a geopackage file.
+    Class that represents a vector file that will be transformed into an fgb
+    file via ogr2ogr.
     """
+
+    ALLOWED_SUFFIXES: ClassVar[set[str]] = {"geojson", "gpkg", "parquet"}
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.suffix not in self.ALLOWED_SUFFIXES:
+            error_msg = (
+                f"File type {self.suffix} must be in {self.ALLOWED_SUFFIXES}"
+            )
+            logger.error(error_msg)
+            raise ValueError(error_msg)
 
     def convert(self) -> FlatGeobuf:
         out_path = Path(self.fpath.parent.joinpath(self.fpath.stem + ".fgb"))
@@ -115,7 +127,9 @@ class GeoPackage(GeoFile):
         subprocess.run(ogr_args, check=True)
         result = FlatGeobuf(str(out_path))
         result.fname = self.fname
-        result.fname = result.fname.replace(".gpkg", ".fgb")
+        result.fname = result.fname.replace(
+            "".join((".", self.suffix)), ".fgb"
+        )
         return result
 
 
