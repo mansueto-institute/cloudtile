@@ -103,11 +103,7 @@ class VectorFile(GeoFile):
     file via ogr2ogr.
     """
 
-    ALLOWED_SUFFIXES: ClassVar[set[str]] = {
-        "geojson",
-        "gpkg",
-        "parquet"
-    }
+    ALLOWED_SUFFIXES: ClassVar[set[str]] = {"geojson", "gpkg", "parquet"}
 
     def __post_init__(self):
         super().__post_init__()
