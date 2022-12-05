@@ -94,6 +94,10 @@ class S3Storage:
                 )
 
         except ClientError as e:
+            if e.response["Error"]["Code"] == "404":
+                error_msg = f"file {file_key} not found in S3"
+                logger.error(error_msg)
+                raise FileNotFoundError(error_msg) from e
             logger.error(e)
             raise e from e
 
