@@ -39,6 +39,8 @@ line-length = 79
 
 [tool.mypy]
 ignore_missing_imports = true
+packages = ["src"]
+exclude = ["src/cloudtile/cdk"]
 
 [tool.pytest.ini_options]
 filterwarnings = "ignore::DeprecationWarning:botocore.*"
