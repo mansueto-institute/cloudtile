@@ -2,6 +2,7 @@
 cdk.out
 .cdk.staging
 .git
+tests
 
 # go-pmtiles executable
 pmtiles
