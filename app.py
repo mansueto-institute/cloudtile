@@ -19,8 +19,8 @@ CloudtileStack(
     app,
     "CloudtileStack",
     env=cdk.Environment(
-        account=os.getenv("CDK_DEFAULT_ACCOUNT"),
-        region=os.getenv("CDK_DEFAULT_REGION"),
+        account="921974715484",
+        region="us-east-2"
     ),
 )
 
