@@ -34,7 +34,7 @@ jobs:
 
       - name: Lint with mypy
         run: |
-          mypy ./src/cloudtile/
+          mypy
 
       - name: Lint with black
         uses: psf/black@stable
