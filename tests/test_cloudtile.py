@@ -16,5 +16,21 @@ def test_import_cloudtile():
     import cloudtile  # noqa: F401
 
 
+def test_import_cli():
+    from cloudtile import __main__  # noqa: F401
+
+
+def test_import_converter():
+    from cloudtile import converter  # noqa: F401
+
+
+def test_import_ecs():
+    from cloudtile import ecs  # noqa: F401
+
+
+def test_import_geofile():
+    from cloudtile import geofile  # noqa: F401
+
+
 def test_import_s3():
     from cloudtile import s3  # noqa: F401
