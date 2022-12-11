@@ -1,2 +1,2 @@
 [report]
-omit = src/cloudtile/cdk/*
+omit = ./src/cloudtile/cdk/*
