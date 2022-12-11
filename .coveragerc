@@ -1,2 +1,14 @@
+[run]
+omit =
+    src/cloudtile/cdk/*
+    */cloudtile/src/cloudtile/cdk/*
+
 [report]
-omit = ./src/cloudtile/cdk/*
+omit =
+    src/cloudtile/cdk/*
+    */cloudtile/src/cloudtile/cdk/*
+
+[paths]
+source =
+    src
+    */cloudtile/src
