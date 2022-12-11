@@ -55,11 +55,11 @@ class Converter:
             self.origin.set_zoom_levels(**kwargs)
 
         result = self.origin.convert()
-        result.upload()
 
         if self.remote:
+            result.upload()
             self.origin.remove()
-        result.remove()
+            result.remove()
 
     @staticmethod
     def load_file(origin_str: str, remote: bool) -> GeoFile:

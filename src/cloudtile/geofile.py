@@ -216,7 +216,7 @@ class FlatGeobuf(GeoFile):
             raise AttributeError("Must set zoom levels before converting.")
 
         out_path = Path(
-            self.fpath.parent.joinpath(self.fpath.stem + ".mbtiles")
+            self.fpath.parent.joinpath(self._get_result_fname())
         )
         tip_args: list[str] = ["tippecanoe"]
         tip_args.extend(self._convert_to_list_args(self._read_config()))
