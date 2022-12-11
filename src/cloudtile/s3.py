@@ -68,9 +68,13 @@ class S3Storage:
         if "." not in file_key:
             raise ValueError("You must specify the file suffix")
 
-        _, tmpfile = tempfile.mkstemp(
-            suffix="".join((".", file_key.split(".")[-1]))
+        tmpfile = tempfile.NamedTemporaryFile(
+            suffix="".join((".", file_key.split(".")[-1])), delete=False
         )
+
+        # this is to release for the os so that it can write
+        tmpfile.close()
+
         s3_client = self.s3_client
 
         try:
@@ -89,10 +93,9 @@ class S3Storage:
                 s3_client.download_file(
                     self.bucket_name,
                     "/".join((prefix, file_key)),
-                    tmpfile,
+                    tmpfile.name,
                     Callback=self._tqdm_hook(t),
                 )
-
         except ClientError as e:
             if e.response["Error"]["Code"] == "404":
                 error_msg = f"file {file_key} not found in S3"
@@ -101,7 +104,7 @@ class S3Storage:
             logger.error(e)
             raise e from e
 
-        return Path(tmpfile)
+        return Path(tmpfile.name)
 
     def upload_file(
         self, file_path: str, prefix: str = "", key_name: Optional[str] = None
