@@ -62,6 +62,12 @@ class CloudTileCLI:
                     origin_str=self.args.filename, remote=False
                 )
                 origin.upload()
+            elif self.args.manage_subcommand == "download":
+                origin = Converter.load_file(
+                    origin_str=self.args.filename, remote=True
+                )
+                origin.write(path_str=self.args.directory)
+                origin.remove()
         elif self.args.subcommand == "convert":
             if self.args.convert_subcommand is None:
                 self.convert_parser.print_usage()
@@ -197,10 +203,11 @@ class ManageParser:
             metavar="management",
         )
         cls._build_upload_parser(subparsers)
+        cls._build_download_parser(subparsers)
 
     @staticmethod
     def _build_upload_parser(parser: _SubParsersAction) -> None:
-        upload = parser.add_parser(
+        upload: ArgumentParser = parser.add_parser(
             name="upload",
             help="Uploads a local file to S3",
         )
@@ -211,6 +218,26 @@ class ManageParser:
                 "to upload to S3"
             ),
             metavar="filename",
+        )
+
+    @staticmethod
+    def _build_download_parser(parser: _SubParsersAction) -> None:
+        download: ArgumentParser = parser.add_parser(
+            name="download", help="Downloads a file from S3 a local directory."
+        )
+        download.add_argument(
+            "filename",
+            help=(
+                "Name of the file in S3, something like myfile.parquet or "
+                "blocks.fgb"
+            ),
+        )
+        download.add_argument(
+            "directory",
+            help=(
+                "The relative or absolute path to a directory where you want "
+                "to download the into."
+            ),
         )
 
 
