@@ -72,27 +72,30 @@ class Converter:
 
         Raises:
             NotImplementedError: If you try to do a single-step convert from
-                either a fgb, mbtile or pmtile file.
+                either a mbtile or pmtile file.
         """
         if isinstance(self.origin, VectorFile):
             fgb: FlatGeobuf = self.origin.convert()
-
-            fgb.set_zoom_levels(min_zoom=min_zoom, max_zoom=max_zoom)
-
-            mbtiles: MBTiles = fgb.convert()
-            fgb.remove()
-
-            pmtiles = mbtiles.convert()
-            mbtiles.remove()
-
-            if self.remote:
-                pmtiles.upload()
-                pmtiles.remove()
+        elif isinstance(self.origin, FlatGeobuf):
+            fgb = self.origin
         else:
             raise NotImplementedError(
                 "Single step is only supported for conversions that start "
                 "with a VectorFile"
             )
+
+        fgb.set_zoom_levels(min_zoom=min_zoom, max_zoom=max_zoom)
+
+        mbtiles: MBTiles = fgb.convert()
+        if not isinstance(self.origin, FlatGeobuf):
+            fgb.remove()
+
+        pmtiles = mbtiles.convert()
+        mbtiles.remove()
+
+        if self.remote:
+            pmtiles.upload()
+            pmtiles.remove()
 
     @staticmethod
     def load_file(origin_str: str, remote: bool) -> GeoFile:

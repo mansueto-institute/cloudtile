@@ -176,7 +176,8 @@ class ConvertParser:
             name="single-step",
             help=(
                 "Convert a vector file into an pmtile (equivalent to running "
-                "vector2fgb -> fgb2mbtiles -> mb2pmtiles)"
+                "vector2fgb -> fgb2mbtiles -> mb2pmtiles). You can start from "
+                "a vectorfile or start from a fgb file."
             ),
         )
         ConvertParser._add_std_args(ssparser)
