@@ -100,6 +100,17 @@ optional arguments:
 
 Make sure that if you want to use the `--s3` flag or the `--ecs` flag that you have the infrastructure setup and that you have credentials as environment variables set on your terminal session, otherwise you will not be able to access the AWS resources needed.
 
+## CDK
+
+We use the [`aws-cdk`](https://docs.aws.amazon.com/cdk/v2/guide/home.html#why_use_cdk) for defining, creating, updating and destroying the AWS infrastructure that is used by the application. The `cdk` code can be found in the `cdk` sub-module in the main package.
+
+In order to use the `aws-cdk` CLI you will need to [install it](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install), and check for its [prerequisites](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_prerequisites).
+
+After installing it, you can synthesize the current stack by running `cdk synth`, this will return a CloudFormation configuration file. You can create the stack by running `cdk deploy`. If you make any changes to the stack and would like to update your stack, you can run `cdk diff` to check for the changes (not necessary), and then run `cdk deploy` to update it. If you'd like to tear down the stack, you can run `cdk destroy`.
+
+If you would like to setup the stack on your own AWS account for the first time, you will need to [bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_bootstrap) it.
+
+
 ## Managing
 
 ### Uploading
