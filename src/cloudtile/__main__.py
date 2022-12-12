@@ -275,3 +275,7 @@ def main() -> None:
     """
     cli = CloudTileCLI()
     cli.main()
+
+
+if __name__ == "__main__":
+    main()
