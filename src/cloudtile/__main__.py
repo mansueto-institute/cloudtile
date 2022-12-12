@@ -8,12 +8,14 @@ Created on Wednesday, 31st December 1969 6:00:00 pm
 @purpose:   Main CLI for cloudtile.
 ===============================================================================
 """
+import json
 import logging
 import sys
 from argparse import ArgumentParser, _SubParsersAction
 from typing import Optional
 
 from cloudtile.converter import Converter
+from cloudtile.ecs import ECSTask
 
 logging.basicConfig(level=logging.INFO)
 
@@ -70,12 +72,30 @@ class CloudTileCLI:
             if "max_zoom" not in self.args:
                 self.args.max_zoom = None
 
+            if self.args.ecs:
+                task = ECSTask(self._get_args_for_ecs())
+                print(
+                    json.dumps(
+                        task.run(), sort_keys=True, indent=4, default=str
+                    )
+                )
+                sys.exit(0)
+
             converter = Converter(
-                origin_str=self.args.filename, remote=self.args.remote
+                origin_str=self.args.filename, remote=self.args.s3
             )
             converter.convert(
                 min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
             )
+
+    def _get_args_for_ecs(self) -> list[str]:
+        cli_args: dict = vars(self.args)
+        args = []
+        for arg in cli_args.values():
+            if not isinstance(arg, bool) and arg is not None:
+                args.append(str(arg))
+        args.append("--s3")
+        return args
 
 
 class ConvertParser:
@@ -109,14 +129,7 @@ class ConvertParser:
             name="vector2fgb",
             help="Convert a file using gdal's ogr2ogr",
         )
-        vector2fgb.add_argument(
-            "filename", help="The file name to convert", metavar="filename"
-        )
-        vector2fgb.add_argument(
-            "--remote",
-            help="Whether to use a remote file or use S3",
-            action="store_true",
-        )
+        ConvertParser._add_std_args(vector2fgb)
 
     @staticmethod
     def _build_fgb2mbtiles(parser: _SubParsersAction) -> None:
@@ -124,9 +137,7 @@ class ConvertParser:
             name="fgb2mbtiles",
             help="Convert a file using Tippecanoe",
         )
-        fgb2mbtiles.add_argument(
-            "filename", help="The file name to convert", metavar="filename"
-        )
+        ConvertParser._add_std_args(fgb2mbtiles)
         fgb2mbtiles.add_argument(
             "min_zoom",
             type=int,
@@ -137,11 +148,6 @@ class ConvertParser:
             type=int,
             help="The maximum zoom level to use in the conversion",
         )
-        fgb2mbtiles.add_argument(
-            "--remote",
-            help="Whether to use a remote file or use S3",
-            action="store_true",
-        )
 
     @staticmethod
     def _build_mb2pmtiles(parser: _SubParsersAction) -> None:
@@ -149,12 +155,22 @@ class ConvertParser:
             name="mb2pmtiles",
             help="Convert a file using PMTiles Go executable",
         )
-        mb2pmtiles.add_argument(
+        ConvertParser._add_std_args(mb2pmtiles)
+
+    @staticmethod
+    def _add_std_args(parser: ArgumentParser) -> None:
+        parser.add_argument(
             "filename", help="The file name to convert", metavar="filename"
         )
-        mb2pmtiles.add_argument(
-            "--remote",
+        exc_group = parser.add_mutually_exclusive_group()
+        exc_group.add_argument(
+            "--s3",
             help="Whether to use a remote file or use S3",
+            action="store_true",
+        )
+        exc_group.add_argument(
+            "--ecs",
+            help="Whether to run the entire job on AWS ECS",
             action="store_true",
         )
 

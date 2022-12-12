@@ -20,6 +20,10 @@ from constructs import Construct
 
 
 class CloudtileStack(Stack):
+    """
+    This class describes the AWS infra stack.
+    """
+
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -50,14 +54,15 @@ class CloudtileStack(Stack):
         task = ecs.FargateTaskDefinition(
             self,
             id="cloudtile-ecs-task",
-            cpu=1024,
-            memory_limit_mib=2048,
-            ephemeral_storage_gib=21,
+            cpu=4096,
+            memory_limit_mib=16384,
+            ephemeral_storage_gib=21,  # this is the default
+            family="cloudtile",
         )
         bucket.grant_read_write(task.task_role)
         task.apply_removal_policy(cdk.RemovalPolicy.DESTROY)
 
-        container = task.add_container(
+        task.add_container(
             id="cloudtile",
             container_name="cloudtile",
             image=ecs.ContainerImage.from_docker_image_asset(image),
