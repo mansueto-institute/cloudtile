@@ -49,7 +49,7 @@ This will install linters and the requirements for running the tests. For more i
 
 ## Usage
 
-The main way of using the package is to use its CLI. After installation, you have access to the CLI via the `cloudtile` command in your terminal. You can get help by pasing the `-h` or `--help` flag:
+The main way of using the package is to use its CLI. After installation, you have access to the CLI via the `cloudtile` command in your terminal. You can get help by passing the `-h` or `--help` flag:
 
 ``` bash
 >>> cloudtile -h
@@ -64,7 +64,7 @@ optional arguments:
   -h, --help  show this help message and exit
 ```
 
-You can do the same for subcommands, for example:
+You can do the same for sub-commands, for example:
 
 ``` bash
 >>> cloudtile manage -h
@@ -94,18 +94,72 @@ optional arguments:
   --ecs       Whether to run the entire job on AWS ECS
 ```
 
-### Conversion
+### AWS Credentials
+
+Make sure that if you want to use the `--s3` flag or the `--ecs` flag that you have the infrastructure setup and that you have credentials as environment variables set on your terminal session, otherwise you will not be able to access the AWS resources needed.
+
+## Managing
+
+### Uploading
+
+You can upload files from your local machine by running:
+
+``` bash
+cloudtile manage upload myfile.parquet
+```
+
+If the file is already there (and it has the same hash) you will get a warning informing you that the file is already there. Also you don't have to worry any of the bucket prefixes. The application shares a single bucket for all files and uploads them into their respective sub paths automatically, based on the file suffix.
+
+### Downloading
+
+You can download files from S3 to your local machine by running:
+
+``` bash
+cloudtile manage download myfile.pmtiles .
+```
+
+Make sure to check the help by running:
+
+``` bash
+cloudtile manage download -h
+```
+
+## Conversion
 
 There are three *modes* of converting files:
 
-1. Fully local: input, compute, and output are done locally.
-2. Local-Compute: input and output are downloaded and uploaded from/to S3. While the compute is done locally.
-3. Fully-Remote: everything is done in the cloud.
+1. [Fully Local](#fully-local): input, compute, and output are done locally.
+2. [Local-Compute](#local-compute): input and output are downloaded and uploaded from/to S3. While the compute is done locally.
+3. [Fully-Remote](#fully-remote): everything is done in the cloud.
 
-#### Fully local
+### Fully local
 
-If you want to run a local job to convert a `.parquet` file into a `.fgb` (downloading the `.parquet` file from S3 and uploading the `.fgb` into S3) file you have to do the following:
+If you want to run a local job to convert a `.parquet` file into a `.fgb` (where the `.parquet` file is in your local machine and you want the `.fgb` to be outputted in the same directory as the input file), then you can run this:
 
 ``` bash
 cloudtile convert vector2fgb myfile.parquet
 ```
+
+This will create a file `myfile.fgb` in the same directory as the input file.
+
+### Local Compute
+
+If you want to use a file that exists in S3, do the conversion in your local machine, and then upload the file to S3, then you can use the same command as in [fully local](#fully-local) but with the added flag of `--s3` like this:
+
+``` bash
+cloudtile convert vector2fgb myfile.parquet --s3
+```
+
+Of course the file `myfile.parquet` must be hosted on S3 for this to work! See [uploading](#uploading) for instructions how to upload files.
+
+### Fully Remote
+
+If you already uploaded a file (see [uploading](#uploading)) and you want to run a job on the cloud, then you can use the same command as in [fully local](#fully-local) but with the added flag of `--ecs` like this:
+
+``` bash
+cloudtile convert vector2fgb myfile.parquet --ecs
+```
+
+This, again, will only work if the file is already in S3 (see [uploading](#uploading))
+
+Running the command will submit a task to the ECS cluster and run the download, conversion and upload on a docker container. When you run the command, you will get the `.json` response from the ECS API printer in your terminal that can help you track down the running task on the ECS dashboard on the AWS console. Currently there is no method of notification to notify you that the job has finished.
