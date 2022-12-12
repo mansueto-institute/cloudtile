@@ -90,9 +90,15 @@ class CloudTileCLI:
             converter = Converter(
                 origin_str=self.args.filename, remote=self.args.s3
             )
-            converter.convert(
-                min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
-            )
+
+            if self.args.convert_subcommand == "single-step":
+                converter.single_step_convert(
+                    min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
+                )
+            else:
+                converter.convert(
+                    min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
+                )
 
     def _get_args_for_ecs(self) -> list[str]:
         cli_args: dict = vars(self.args)
@@ -128,6 +134,7 @@ class ConvertParser:
         cls._build_vector2fgb(parser=subparsers)
         cls._build_fgb2mbtiles(parser=subparsers)
         cls._build_mb2pmtiles(parser=subparsers)
+        cls._build_single_step(parser=subparsers)
 
     @staticmethod
     def _build_vector2fgb(parser: _SubParsersAction) -> None:
@@ -162,6 +169,27 @@ class ConvertParser:
             help="Convert a file using PMTiles Go executable",
         )
         ConvertParser._add_std_args(mb2pmtiles)
+
+    @staticmethod
+    def _build_single_step(parser: _SubParsersAction) -> None:
+        ssparser = parser.add_parser(
+            name="single-step",
+            help=(
+                "Convert a vector file into an pmtile (equivalent to running "
+                "vector2fgb -> fgb2mbtiles -> mb2pmtiles)"
+            ),
+        )
+        ConvertParser._add_std_args(ssparser)
+        ssparser.add_argument(
+            "min_zoom",
+            type=int,
+            help="The minimum zoom level to use in the conversion",
+        )
+        ssparser.add_argument(
+            "max_zoom",
+            type=int,
+            help="The maximum zoom level to use in the conversion",
+        )
 
     @staticmethod
     def _add_std_args(parser: ArgumentParser) -> None:
@@ -247,3 +275,7 @@ def main() -> None:
     """
     cli = CloudTileCLI()
     cli.main()
+
+
+if __name__ == "__main__":
+    main()

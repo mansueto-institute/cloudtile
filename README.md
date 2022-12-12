@@ -6,6 +6,8 @@ Python tool for converting vector file formats to pmtiles files by scheduling jo
 
 Features:
 
+## Supported VectorFiles
+
 - Convert (either locally, on a docker file, or on AWS ECS)
   - `{.geojson, .parquet, .gpkg}` -> `fgb`.
   - `.fgb` -> `.mbtiles`.
@@ -131,6 +133,7 @@ There are three *modes* of converting files:
 1. [Fully Local](#fully-local): input, compute, and output are done locally.
 2. [Local-Compute](#local-compute): input and output are downloaded and uploaded from/to S3. While the compute is done locally.
 3. [Fully-Remote](#fully-remote): everything is done in the cloud.
+4. [Single-Step](#single-step): do all convert steps as a single call.
 
 ### Fully local
 
@@ -163,3 +166,25 @@ cloudtile convert vector2fgb myfile.parquet --ecs
 This, again, will only work if the file is already in S3 (see [uploading](#uploading))
 
 Running the command will submit a task to the ECS cluster and run the download, conversion and upload on a docker container. When you run the command, you will get the `.json` response from the ECS API printer in your terminal that can help you track down the running task on the ECS dashboard on the AWS console. Currently there is no method of notification to notify you that the job has finished.
+
+### Single-Step
+
+If you want to convert a [supported file](#supported-vectorfiles) into a `.pmtiles`, you can use the `single-step` convert sub-command. You will have to state which zoom level you want `tippecanoe` to use. You can call the CLI like so (where 2 and 9 are `min_zoom` and `max_zoom`, check out the help for more info):
+
+[Fully Local](#fully-local) mode:
+
+``` bash
+cloudtile convert single-step blocks_SLE.parquet 2 9
+```
+
+[Local Compute](#local-compute) mode:
+
+``` bash
+cloudtile convert single-step blocks_SLE.parquet 2 9 --s3
+```
+
+[Fully Remote](#fully-remote) mode:
+
+``` bash
+cloudtile convert single-step blocks_SLE.parquet 2 9 --ecs
+```
