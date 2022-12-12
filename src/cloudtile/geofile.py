@@ -215,9 +215,7 @@ class FlatGeobuf(GeoFile):
         if not (hasattr(self, "min_zoom") and hasattr(self, "max_zoom")):
             raise AttributeError("Must set zoom levels before converting.")
 
-        out_path = Path(
-            self.fpath.parent.joinpath(self._get_result_fname())
-        )
+        out_path = Path(self.fpath.parent.joinpath(self._get_result_fname()))
         tip_args: list[str] = ["tippecanoe"]
         tip_args.extend(self._convert_to_list_args(self._read_config()))
         tip_args.extend(
