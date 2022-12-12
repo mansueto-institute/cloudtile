@@ -85,11 +85,56 @@ class TestMethods:
             mock_storage.create_bucket()
 
     @staticmethod
+    def test_download_file(mock_storage: S3Storage):
+        mock_storage.create_bucket()
+        mock_storage.upload_file("README.md", prefix="raw")
+        result = mock_storage.download_file("README.md", prefix="raw")
+        with open(file=result, mode="r", encoding="utf-8") as f:
+            text = f.readline().strip()
+            assert text == "# cloudtile"
+
+    @staticmethod
+    def test_download_file_no_suffix(mock_storage: S3Storage):
+        with pytest.raises(ValueError):
+            mock_storage.download_file("test")
+
+    @staticmethod
+    def test_download_file_client_error(mock_storage: S3Storage):
+        mock_storage.s3_client.download_file = MagicMock(
+            side_effect=ClientError(
+                error_response={"Error": {"Code": "SomethingElse"}},
+                operation_name="test",
+            )
+        )
+        with pytest.raises(ClientError):
+            mock_storage.download_file("README.md", prefix="raw")
+
+    @staticmethod
+    def test_download_file_not_found(mock_storage: S3Storage):
+        mock_storage.create_bucket()
+        mock_storage.s3_client.download_file = MagicMock(
+            side_effect=ClientError(
+                error_response={"Error": {"Code": "404"}},
+                operation_name="test",
+            )
+        )
+        with pytest.raises(FileNotFoundError):
+            mock_storage.download_file("README.md", prefix="raw")
+
+    @staticmethod
     def test_upload_file(mock_storage: S3Storage):
         mock_storage.create_bucket()
         mock_storage.upload_file("LICENSE", prefix="raw")
         s3 = mock_storage.s3_client
         obj = s3.get_object(Bucket="cloudtile-files", Key="raw/LICENSE")
+        assert "GNU" in obj["Body"].read().decode("utf-8")
+
+    @staticmethod
+    def test_upload_file_with_key(mock_storage: S3Storage):
+        mock_storage.create_bucket()
+        mock_storage.upload_file("LICENSE", prefix="raw", key_name="test")
+        s3 = mock_storage.s3_client
+        obj = s3.get_object(Bucket="cloudtile-files", Key="raw/test")
         assert "GNU" in obj["Body"].read().decode("utf-8")
 
     @staticmethod

@@ -45,6 +45,7 @@ exclude = ["src/cloudtile/cdk"]
 [tool.pytest.ini_options]
 filterwarnings = "ignore::DeprecationWarning:botocore.*"
 addopts = [
+    "--cov-config=.coveragerc",
     "--cov=cloudtile",
     "--cov-branch",
     "--cov-report=term-missing",
