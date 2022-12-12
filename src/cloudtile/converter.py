@@ -45,7 +45,7 @@ class Converter:
             raise TypeError("origin must be a subclass of GeoFile")
         self._origin = value
 
-    def convert(self, **kwargs):
+    def convert(self, **kwargs) -> None:
         """
         Converts the origin file object and uploads it to S3 once done. If
         the files are being downloaded and uploaded from S3 the local temp
@@ -60,6 +60,39 @@ class Converter:
             result.upload()
             self.origin.remove()
             result.remove()
+
+    def single_step_convert(self, min_zoom: int, max_zoom: int) -> None:
+        """
+        This method is a helper method for converting a vectorfile to a
+        pmtile file at the specified zoom level.
+
+        Args:
+            min_zoom (int): The minimum zoom for tippecanoe
+            max_zoom (int): The maximum zoom for tippecanoe
+
+        Raises:
+            NotImplementedError: If you try to do a single-step convert from
+                either a fgb, mbtile or pmtile file.
+        """
+        if isinstance(self.origin, VectorFile):
+            fgb: FlatGeobuf = self.origin.convert()
+
+            fgb.set_zoom_levels(min_zoom=min_zoom, max_zoom=max_zoom)
+
+            mbtiles: MBTiles = fgb.convert()
+            fgb.remove()
+
+            pmtiles = mbtiles.convert()
+            mbtiles.remove()
+
+            if self.remote:
+                pmtiles.write("")
+                pmtiles.remove()
+        else:
+            raise NotImplementedError(
+                "Single step is only supported for conversions that start "
+                "with a VectorFile"
+            )
 
     @staticmethod
     def load_file(origin_str: str, remote: bool) -> GeoFile:
