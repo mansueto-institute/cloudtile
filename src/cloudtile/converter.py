@@ -65,14 +65,10 @@ class Converter:
             self.origin.remove()
             result.remove()
 
-    def single_step_convert(self, min_zoom: int, max_zoom: int) -> None:
+    def single_step_convert(self, **kwargs) -> None:
         """
         This method is a helper method for converting a vectorfile to a
         pmtile file at the specified zoom level.
-
-        Args:
-            min_zoom (int): The minimum zoom for tippecanoe
-            max_zoom (int): The maximum zoom for tippecanoe
 
         Raises:
             NotImplementedError: If you try to do a single-step convert from
