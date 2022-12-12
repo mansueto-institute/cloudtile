@@ -52,7 +52,11 @@ class Converter:
         files are deleted afterwards.
         """
         if isinstance(self.origin, FlatGeobuf):
-            self.origin.set_zoom_levels(**kwargs)
+            self.origin.set_zoom_levels(
+                min_zoom=kwargs["min_zoom"], max_zoom=kwargs["max_zoom"]
+            )
+            if kwargs["config"] is not None:
+                self.origin.cfg_path = kwargs["config"]
 
         result = self.origin.convert()
 
@@ -84,7 +88,11 @@ class Converter:
                 "with a VectorFile"
             )
 
-        fgb.set_zoom_levels(min_zoom=min_zoom, max_zoom=max_zoom)
+        fgb.set_zoom_levels(
+            min_zoom=kwargs["min_zoom"], max_zoom=kwargs["max_zoom"]
+        )
+        if kwargs["config"] is not None:
+            fgb.cfg_path = kwargs["config"]
 
         mbtiles: MBTiles = fgb.convert()
         if not isinstance(self.origin, FlatGeobuf):

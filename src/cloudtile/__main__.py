@@ -77,6 +77,8 @@ class CloudTileCLI:
                 self.args.min_zoom = None
             if "max_zoom" not in self.args:
                 self.args.max_zoom = None
+            if "config" not in self.args:
+                self.args.config = None
 
             if self.args.ecs:
                 task = ECSTask(self._get_args_for_ecs())
@@ -93,11 +95,15 @@ class CloudTileCLI:
 
             if self.args.convert_subcommand == "single-step":
                 converter.single_step_convert(
-                    min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
+                    min_zoom=self.args.min_zoom,
+                    max_zoom=self.args.max_zoom,
+                    config=self.args.config,
                 )
             else:
                 converter.convert(
-                    min_zoom=self.args.min_zoom, max_zoom=self.args.max_zoom
+                    min_zoom=self.args.min_zoom,
+                    max_zoom=self.args.max_zoom,
+                    config=self.args.config,
                 )
 
     def _get_args_for_ecs(self) -> list[str]:
@@ -146,21 +152,12 @@ class ConvertParser:
 
     @staticmethod
     def _build_fgb2mbtiles(parser: _SubParsersAction) -> None:
-        fgb2mbtiles = parser.add_parser(
+        fgb2mbtiles: ArgumentParser = parser.add_parser(
             name="fgb2mbtiles",
             help="Convert a file using Tippecanoe",
         )
         ConvertParser._add_std_args(fgb2mbtiles)
-        fgb2mbtiles.add_argument(
-            "min_zoom",
-            type=int,
-            help="The minimum zoom level to use in the conversion",
-        )
-        fgb2mbtiles.add_argument(
-            "max_zoom",
-            type=int,
-            help="The maximum zoom level to use in the conversion",
-        )
+        ConvertParser._add_fgb_args(fgb2mbtiles)
 
     @staticmethod
     def _build_mb2pmtiles(parser: _SubParsersAction) -> None:
@@ -181,16 +178,7 @@ class ConvertParser:
             ),
         )
         ConvertParser._add_std_args(ssparser)
-        ssparser.add_argument(
-            "min_zoom",
-            type=int,
-            help="The minimum zoom level to use in the conversion",
-        )
-        ssparser.add_argument(
-            "max_zoom",
-            type=int,
-            help="The maximum zoom level to use in the conversion",
-        )
+        ConvertParser._add_fgb_args(ssparser)
 
     @staticmethod
     def _add_std_args(parser: ArgumentParser) -> None:
@@ -207,6 +195,28 @@ class ConvertParser:
             "--ecs",
             help="Whether to run the entire job on AWS ECS",
             action="store_true",
+        )
+
+    @staticmethod
+    def _add_fgb_args(parser: ArgumentParser) -> None:
+        parser.add_argument(
+            "min_zoom",
+            type=int,
+            help="The minimum zoom level to use in the conversion",
+        )
+        parser.add_argument(
+            "max_zoom",
+            type=int,
+            help="The maximum zoom level to use in the conversion",
+        )
+        parser.add_argument(
+            "--config",
+            type=str,
+            default=None,
+            help=(
+                "The path to a config file for tippecanoe. If not passed the "
+                "default config file is used."
+            ),
         )
 
 

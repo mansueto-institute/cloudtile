@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from importlib.resources import open_text
 from pathlib import Path
 from shutil import copy
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Optional
 
 import yaml
 
@@ -165,6 +165,7 @@ class FlatGeobuf(GeoFile):
 
     _min_zoom: int = field(init=False, repr=False)
     _max_zoom: int = field(init=False, repr=False)
+    _cfg_path: Optional[Path] = field(init=False, repr=False, default=None)
 
     @property
     def min_zoom(self) -> int:
@@ -199,6 +200,33 @@ class FlatGeobuf(GeoFile):
             if value <= self.min_zoom:
                 raise ValueError("min_zoom < max_zoom must be true")
         self._max_zoom = value
+
+    @property
+    def cfg_path(self) -> Optional[Path]:
+        """
+        The config file to use in Tippecanoe. By default it's set to None and
+        uses the .yaml file included in the python package.
+
+        Returns:
+            Optional[Path]: The path to the yaml file if set, otherwise it's
+                None and uses the default.
+        """
+        return self._cfg_path
+
+    @cfg_path.setter
+    def cfg_path(self, path_str: str) -> None:
+        """
+        Sets a custom tippecanoe configuration file to use when converting.
+
+        Args:
+            path_str (str): the absolute or relative path to where the
+                tippecanoe .yaml config file is located.
+        """
+        path = Path(path_str).resolve()
+        if not path.exists():
+            raise FileNotFoundError(f"Config file {path} not found")
+        logger.info("Using custom Tippecanoe config file from %s", path)
+        self._cfg_path = path
 
     def set_zoom_levels(self, min_zoom: int, max_zoom: int) -> None:
         """
@@ -248,8 +276,7 @@ class FlatGeobuf(GeoFile):
         )
         return result
 
-    @staticmethod
-    def _read_config() -> dict[str, Any]:
+    def _read_config(self) -> dict[str, Any]:
         """
         Parses a .yaml config file for Tippecanoe.
 
@@ -257,8 +284,12 @@ class FlatGeobuf(GeoFile):
             dict[str, Any]: A flat dictionary with the uncommented settings in
                 the .yaml file.
         """
-        with open_text("cloudtile", "tiles_config.yaml") as f:
-            config_dict: dict = yaml.safe_load(f)
+        if self.cfg_path is None:
+            with open_text("cloudtile", "tiles_config.yaml") as f:
+                config_dict: dict = yaml.safe_load(f)
+        else:
+            with open(self.cfg_path, "r", encoding="utf-8") as f:
+                config_dict = yaml.safe_load(f)
 
         flat_dict = {}
         for v in config_dict.values():
