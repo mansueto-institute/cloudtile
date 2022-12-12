@@ -10,7 +10,7 @@ Created on Wednesday, 31st December 1969 7:00:00 pm
 """
 from dataclasses import dataclass, field
 
-from cloudtile.geofile import FlatGeobuf, GeoFile, MBTiles, VectorFile
+from cloudtile.geofile import FlatGeobuf, GeoFile, MBTiles, PMTiles, VectorFile
 
 
 @dataclass
@@ -90,6 +90,11 @@ class Converter:
                 origin = MBTiles.from_s3(file_key=origin_str)
             else:
                 origin = MBTiles(fpath_str=origin_str)
+        elif origin_str.endswith(".pmtiles"):
+            if remote:
+                origin = PMTiles.from_s3(file_key=origin_str)
+            else:
+                origin = PMTiles(fpath_str=origin_str)
         else:
             try:
                 if remote:

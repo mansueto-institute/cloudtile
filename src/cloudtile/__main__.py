@@ -236,7 +236,7 @@ class ManageParser:
             "directory",
             help=(
                 "The relative or absolute path to a directory where you want "
-                "to download the into."
+                "to download into."
             ),
         )
 
