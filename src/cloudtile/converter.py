@@ -86,7 +86,11 @@ class Converter:
             mbtiles.remove()
 
             if self.remote:
+<<<<<<< HEAD
                 pmtiles.write("")
+=======
+                pmtiles.write()
+>>>>>>> 1290edd (feat(convert): allow single step conversion)
                 pmtiles.remove()
         else:
             raise NotImplementedError(
