@@ -83,17 +83,18 @@ optional arguments:
 
 ``` bash
 cloudtile convert fgb2mbtiles -h
-usage: cloudtile convert fgb2mbtiles [-h] [--s3 | --ecs] filename min_zoom max_zoom
+usage: cloudtile convert fgb2mbtiles [-h] [--s3 | --ecs] [--config CONFIG] filename min_zoom max_zoom
 
 positional arguments:
-  filename    The file name to convert
-  min_zoom    The minimum zoom level to use in the conversion
-  max_zoom    The maximum zoom level to use in the conversion
+  filename         The file name to convert
+  min_zoom         The minimum zoom level to use in the conversion
+  max_zoom         The maximum zoom level to use in the conversion
 
 optional arguments:
-  -h, --help  show this help message and exit
-  --s3        Whether to use a remote file or use S3
-  --ecs       Whether to run the entire job on AWS ECS
+  -h, --help       show this help message and exit
+  --s3             Whether to use a remote file or use S3
+  --ecs            Whether to run the entire job on AWS ECS
+  --config CONFIG  The path to a config file for tippecanoe. If not passed the default config file is used.
 ```
 
 ### AWS Credentials
@@ -109,7 +110,6 @@ In order to use the `aws-cdk` CLI you will need to [install it](https://docs.aws
 After installing it, you can synthesize the current stack by running `cdk synth`, this will return a CloudFormation configuration file. You can create the stack by running `cdk deploy`. If you make any changes to the stack and would like to update your stack, you can run `cdk diff` to check for the changes (not necessary), and then run `cdk deploy` to update it. If you'd like to tear down the stack, you can run `cdk destroy`.
 
 If you would like to setup the stack on your own AWS account for the first time, you will need to [bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_bootstrap) it.
-
 
 ## Managing
 
@@ -161,7 +161,7 @@ This will create a file `myfile.fgb` in the same directory as the input file.
 If you want to use a file that exists in S3, do the conversion in your local machine, and then upload the file to S3, then you can use the same command as in [fully local](#fully-local) but with the added flag of `--s3` like this:
 
 ``` bash
-cloudtile convert vector2fgb myfile.parquet --s3
+cloudtile convert vector2fgb --s3 myfile.parquet
 ```
 
 Of course the file `myfile.parquet` must be hosted on S3 for this to work! See [uploading](#uploading) for instructions how to upload files.
@@ -171,7 +171,7 @@ Of course the file `myfile.parquet` must be hosted on S3 for this to work! See [
 If you already uploaded a file (see [uploading](#uploading)) and you want to run a job on the cloud, then you can use the same command as in [fully local](#fully-local) but with the added flag of `--ecs` like this:
 
 ``` bash
-cloudtile convert vector2fgb myfile.parquet --ecs
+cloudtile convert vector2fgb --ecs myfile.parquet
 ```
 
 This, again, will only work if the file is already in S3 (see [uploading](#uploading))
@@ -180,7 +180,7 @@ Running the command will submit a task to the ECS cluster and run the download, 
 
 ### Single-Step
 
-If you want to convert a [supported file](#supported-vectorfiles) into a `.pmtiles`, you can use the `single-step` convert sub-command. You will have to state which zoom level you want `tippecanoe` to use. You can call the CLI like so (where 2 and 9 are `min_zoom` and `max_zoom`, check out the help for more info):
+If you want to convert a [supported file](#supported-vectorfiles) or a `.fgb` file into a `.pmtiles` directly, you can use the `single-step` convert sub-command. You will have to state which zoom level you want `tippecanoe` to use. You can call the CLI like so (where 2 and 9 are `min_zoom` and `max_zoom`, check out the help for more info):
 
 [Fully Local](#fully-local) mode:
 
@@ -191,11 +191,31 @@ cloudtile convert single-step blocks_SLE.parquet 2 9
 [Local Compute](#local-compute) mode:
 
 ``` bash
-cloudtile convert single-step blocks_SLE.parquet 2 9 --s3
+cloudtile convert single-step --s3 blocks_SLE.parquet 2 9
 ```
 
 [Fully Remote](#fully-remote) mode:
 
 ``` bash
-cloudtile convert single-step blocks_SLE.parquet 2 9 --ecs
+cloudtile convert single-step --ecs blocks_SLE.parquet 2 9
+```
+
+### Tippecanoe Settings
+
+There are some opinionated default settings that Tippecanoe uses in `/src/cloudtile/tiles_config.yaml`, which are used by default. If you would like use a different configuration file, you can pass the path to it using the `--config` optional argument. The `--config` optional argument is only exposed either in the `single-step` or in the `fgb2mbtiles` convert sub command, since these are the only conversions that use Tippecanoe. You can pass it like this for example:
+
+``` bash
+cloudtile convert fgb2mbtiles --config /dir/myconfig.yaml myfile.fgb 5 10
+```
+
+Or via the single-step conversion from a `.fgb` file
+
+``` bash
+cloudtile convert single-step --config /dir/myconfig.yaml myfile.fgb 5 10
+```
+
+Or via the single-step conversion from a vectorfile:
+
+``` bash
+cloudtile convert single-step --config /dir/myconfig.yaml myfile.parquet 5 10
 ```

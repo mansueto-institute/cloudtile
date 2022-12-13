@@ -52,7 +52,11 @@ class Converter:
         files are deleted afterwards.
         """
         if isinstance(self.origin, FlatGeobuf):
-            self.origin.set_zoom_levels(**kwargs)
+            self.origin.set_zoom_levels(
+                min_zoom=kwargs["min_zoom"], max_zoom=kwargs["max_zoom"]
+            )
+            if kwargs["config"] is not None:
+                self.origin.cfg_path = kwargs["config"]
 
         result = self.origin.convert()
 
@@ -61,38 +65,41 @@ class Converter:
             self.origin.remove()
             result.remove()
 
-    def single_step_convert(self, min_zoom: int, max_zoom: int) -> None:
+    def single_step_convert(self, **kwargs) -> None:
         """
         This method is a helper method for converting a vectorfile to a
         pmtile file at the specified zoom level.
 
-        Args:
-            min_zoom (int): The minimum zoom for tippecanoe
-            max_zoom (int): The maximum zoom for tippecanoe
-
         Raises:
             NotImplementedError: If you try to do a single-step convert from
-                either a fgb, mbtile or pmtile file.
+                either a mbtile or pmtile file.
         """
         if isinstance(self.origin, VectorFile):
             fgb: FlatGeobuf = self.origin.convert()
-
-            fgb.set_zoom_levels(min_zoom=min_zoom, max_zoom=max_zoom)
-
-            mbtiles: MBTiles = fgb.convert()
-            fgb.remove()
-
-            pmtiles = mbtiles.convert()
-            mbtiles.remove()
-
-            if self.remote:
-                pmtiles.upload()
-                pmtiles.remove()
+        elif isinstance(self.origin, FlatGeobuf):
+            fgb = self.origin
         else:
             raise NotImplementedError(
                 "Single step is only supported for conversions that start "
                 "with a VectorFile"
             )
+
+        fgb.set_zoom_levels(
+            min_zoom=kwargs["min_zoom"], max_zoom=kwargs["max_zoom"]
+        )
+        if kwargs["config"] is not None:
+            fgb.cfg_path = kwargs["config"]
+
+        mbtiles: MBTiles = fgb.convert()
+        if not isinstance(self.origin, FlatGeobuf):
+            fgb.remove()
+
+        pmtiles = mbtiles.convert()
+        mbtiles.remove()
+
+        if self.remote:
+            pmtiles.upload()
+            pmtiles.remove()
 
     @staticmethod
     def load_file(origin_str: str, remote: bool) -> GeoFile:
