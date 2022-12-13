@@ -12,6 +12,12 @@ pmtiles
 *.mbtiles
 *.pmtiles
 *.parquet
+*.shapefile
+!test.parquet
+!test.shapefile
+!test.fgb
+!test-5-6.mbtiles
+!test-5-6.pmtiles
 
 # testing files
 coverage-junit.xml

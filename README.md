@@ -4,8 +4,6 @@
 
 Python tool for converting vector file formats to pmtiles files by scheduling jobs on the cloud.
 
-Features:
-
 ## Supported VectorFiles
 
 - Convert (either locally, on a docker file, or on AWS ECS)
@@ -14,6 +12,8 @@ Features:
   - `.mbtiles` -> `.pmtiles`.
 - Upload files to S3
 - Download files from S3
+
+All the files are hosted in S3 within the bucket: `cloudtile-files`.
 
 ## Installation
 

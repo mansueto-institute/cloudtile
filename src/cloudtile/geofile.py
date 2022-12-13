@@ -179,6 +179,8 @@ class FlatGeobuf(GeoFile):
 
     @min_zoom.setter
     def min_zoom(self, value: int) -> None:
+        if value <= 0:
+            raise ValueError("min_zoom must be > 0")
         if hasattr(self, "max_zoom"):
             if value >= self.max_zoom:
                 raise ValueError("min_zoom < max_zoom must be true")
@@ -196,6 +198,8 @@ class FlatGeobuf(GeoFile):
 
     @max_zoom.setter
     def max_zoom(self, value: int) -> None:
+        if value <= 0:
+            raise ValueError("max_zoom must be > 0")
         if hasattr(self, "min_zoom"):
             if value <= self.min_zoom:
                 raise ValueError("min_zoom < max_zoom must be true")

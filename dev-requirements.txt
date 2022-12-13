@@ -1,9 +1,10 @@
+aws-cdk-lib==2.53.0
 black
+bump2version
+constructs>=10.0.0,<11.0.0
 flake8
+moto[s3]
 mypy
 pylint
-pytest-cov
 pytest
-moto[s3]
-aws-cdk-lib==2.53.0
-constructs>=10.0.0,<11.0.0
+pytest-cov
