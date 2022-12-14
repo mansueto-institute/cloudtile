@@ -41,12 +41,56 @@ class ECSTask:
     """
 
     cli_args: list[str]
-    cpu: Optional[int] = None
-    memory: Optional[int] = None
+    _cpu: Optional[int] = None
+    _memory: Optional[int] = None
 
     def __post_init__(self):
         self.ecs = boto3.client("ecs", region_name="us-east-2")
         self.ec2 = boto3.client("ec2", region_name="us-east-2")
+
+    @property
+    def cpu(self) -> Optional[int]:
+        """
+        Sets the cpu value.
+
+        Returns:
+            Optional[int]: The cpu value.
+        """
+        return self._cpu
+
+    @cpu.setter
+    def cpu(self, value: Optional[int]) -> None:
+        if isinstance(value, int):
+            if value <= 0:
+                raise ValueError("cpu must be a natural_number")
+            self._cpu = value
+        else:
+            raise TypeError("cpu must be an integer")
+
+    @property
+    def memory(self) -> Optional[int]:
+        """
+        Gets the memory value.
+
+        Returns:
+            Optional[int]: The memory value.
+        """
+        return self._memory
+
+    @memory.setter
+    def memory(self, value: Optional[int]) -> None:
+        """
+        Sets the memory value.
+
+        Args:
+            value (Optional[int]): The memory value.
+        """
+        if isinstance(value, int):
+            if value <= 0:
+                raise ValueError("memory must be a natural_number")
+            self._memory = value
+        else:
+            raise TypeError("memory must be an integer")
 
     def run(self) -> dict:
         """
@@ -70,17 +114,11 @@ class ECSTask:
         }
 
         if self.cpu is not None:
-            if isinstance(self.cpu, int):
-                overrides["containerOverrides"][0]["cpu"] = self.cpu * 1024
-            else:
-                raise TypeError("cpu must be an integer")
+            overrides["containerOverrides"][0]["cpu"] = self.cpu * 1024
         else:
             overrides["containerOverrides"][0]["cpu"] = 2048
         if self.memory is not None:
-            if isinstance(self.memory, int):
-                overrides["containerOverrides"][0]["memory"] = self.memory
-            else:
-                raise TypeError("memory must be an integer")
+            overrides["containerOverrides"][0]["memory"] = self.memory
 
         response = self.ecs.run_task(
             cluster="cloudtile",
