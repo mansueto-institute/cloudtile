@@ -61,8 +61,8 @@ class TestAttributes:
 
     @staticmethod
     def test_memory_set(ecstask: ECSTask) -> None:
-        ecstask.memory = 1
-        assert ecstask.memory == 1
+        ecstask.memory = 5120
+        assert ecstask.memory == 5120
 
     @staticmethod
     def test_memory_bad_type(ecstask: ECSTask) -> None:
@@ -73,6 +73,16 @@ class TestAttributes:
     def test_memory_bad_value(ecstask: ECSTask) -> None:
         with pytest.raises(ValueError):
             ecstask.memory = 0
+
+    @staticmethod
+    def test_memory_bad_value_range(ecstask: ECSTask) -> None:
+        with pytest.raises(ValueError):
+            ecstask.memory = 1000000
+
+    @staticmethod
+    def test_memory_bad_value_multiple(ecstask: ECSTask) -> None:
+        with pytest.raises(ValueError):
+            ecstask.memory = 5121
 
 
 @patch.object(ECSTask, "_get_default_subnets", return_value=["subnet-1234"])
@@ -131,12 +141,12 @@ def test_run_w_memory(
     mock_subnets: MagicMock,
     ecstask: ECSTask,
 ) -> None:
-    ecstask.memory = 2048
+    ecstask.memory = 5120
     ecstask.run()
     mock_subnets.assert_called_once()
     mock_sec_group.assert_called_once()
     call_args = ecstask.ecs.run_task.call_args[1]
-    assert 2048 == call_args["overrides"]["containerOverrides"][0]["memory"]
+    assert 5120 == call_args["overrides"]["containerOverrides"][0]["memory"]
 
 
 def test_get_fault_vpc_id(ecstask: ECSTask) -> None:
