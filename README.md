@@ -49,6 +49,44 @@ pip install -e cloudtile[dev]
 
 This will install linters and the requirements for running the tests. For more information as to what is done to the code for testing/linting refer to [GitHub Action](.github/workflows/build.yml).
 
+## Dependencies
+
+### Completely Local
+
+If you want to run the code completely locally, you have to install its external dependencies:
+
+#### External Dependencies
+
+- [GDAL](https://gdal.org/download.html)
+- [tippecanoe](https://github.com/felt/tippecanoe)
+- [go-pmtiles](https://github.com/protomaps/go-pmtiles)
+
+You can refer to our [Dockerfile](Dockerfile) to reference installation instructions for installing the [external dependencies](#external-dependencies). These are also found in their respective repositories.
+
+### Docker
+
+Some of these dependencies are hard to install manually, so instead you can run the the code within a Docker container. You can use the [Dockerfile](Dockerfile) included in the package to first build the Docker image and then run it on a local container.
+
+You would do this by first building the image:
+
+``` bash
+docker build -t cloudtile:latest .
+```
+
+And then running it (notice the passing of CLI arguments):
+
+``` bash
+docker run --rm cloudtile:latest convert single-step blocks_SLE.parquet 5 9
+```
+
+Or if you want to use S3 storage:
+
+``` bash
+docker run --env-file .env --rm cloudtile:latest convert single-step blocks_SLE.parquet 5 9 --s3
+```
+
+Notice in the last example that we are passing AWS credentials as environment variables via the `--env-file=.env` file. This is necessary for allowing the container to access your AWS account.
+
 ## Usage
 
 The main way of using the package is to use its CLI. After installation, you have access to the CLI via the `cloudtile` command in your terminal. You can get help by passing the `-h` or `--help` flag:
