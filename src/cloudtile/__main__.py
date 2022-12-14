@@ -12,6 +12,7 @@ import json
 import logging
 import sys
 from argparse import ArgumentParser, _SubParsersAction
+from importlib import metadata
 from typing import Optional
 
 from cloudtile.converter import Converter
@@ -46,6 +47,14 @@ class CloudTileCLI:
             name="convert", help="File conversion subcommands"
         )
         ConvertParser.build_parser(self.convert_parser)
+
+        parser.add_argument(
+            "--version",
+            "-v",
+            help="Display the cloudtile version installed.",
+            action="store_true",
+        )
+
         self.parser = parser
         self.args = parser.parse_args(args)
 
@@ -55,7 +64,11 @@ class CloudTileCLI:
         of the subcommands.
         """
         if self.args.subcommand is None:
-            self.parser.print_usage()
+            if self.args.version:
+                print(f"cloudtile version: {metadata.version('cloudtile')}")
+                sys.exit(0)
+            else:
+                self.parser.print_usage()
         elif self.args.subcommand == "manage":
             if self.args.manage_subcommand == "upload":
                 origin = Converter.load_file(
