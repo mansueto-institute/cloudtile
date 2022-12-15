@@ -223,7 +223,7 @@ class ConvertParser:
                 "used with the --ecs flag. Additionally, the values must be "
                 "within the range of 4096 - 30720 in increments of 1024."
             ),
-            type=int
+            type=int,
         )
 
     @staticmethod
