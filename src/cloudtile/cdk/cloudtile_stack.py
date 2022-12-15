@@ -55,7 +55,7 @@ class CloudtileStack(Stack):
             self,
             id="cloudtile-ecs-task",
             cpu=4096,
-            memory_limit_mib=16384,
+            memory_limit_mib=30720,
             ephemeral_storage_gib=21,  # this is the default
             family="cloudtile",
         )

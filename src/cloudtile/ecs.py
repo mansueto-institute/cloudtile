@@ -86,8 +86,10 @@ class ECSTask:
             value (Optional[int]): The memory value.
         """
         if isinstance(value, int):
-            if value <= 0:
-                raise ValueError("memory must be a natural_number")
+            if value < 4096 or value > 30720:
+                raise ValueError("memory must be between 4096 and 30720")
+            if value % 1024 != 0:
+                raise ValueError("memory must be a multiple of 1024")
             self._memory = value
         else:
             raise TypeError("memory must be an integer")

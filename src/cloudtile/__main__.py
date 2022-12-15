@@ -92,9 +92,16 @@ class CloudTileCLI:
                 self.args.max_zoom = None
             if "config" not in self.args:
                 self.args.config = None
+            if self.args.memory and not self.args.ecs:
+                self.parser.error("--memory can only be used with --ecs")
 
             if self.args.ecs:
                 task = ECSTask(self._get_args_for_ecs())
+                if self.args.memory is not None:
+                    try:
+                        task.memory = self.args.memory
+                    except ValueError as e:
+                        self.parser.error(e)
                 print(
                     json.dumps(
                         task.run(), sort_keys=True, indent=4, default=str
@@ -208,6 +215,15 @@ class ConvertParser:
             "--ecs",
             help="Whether to run the entire job on AWS ECS",
             action="store_true",
+        )
+        parser.add_argument(
+            "--memory",
+            help=(
+                "Whether to override the 16GB memory limit. Must be only be "
+                "used with the --ecs flag. Additionally, the values must be "
+                "within the range of 4096 - 30720 in increments of 1024."
+            ),
+            type=int,
         )
 
     @staticmethod
