@@ -243,7 +243,7 @@ class FlatGeobuf(GeoFile):
         self.min_zoom = min_zoom
         self.max_zoom = max_zoom
 
-    def convert(self) -> MBTiles:
+    def convert(self) -> PMTiles:
         if not (hasattr(self, "min_zoom") and hasattr(self, "max_zoom")):
             raise AttributeError("Must set zoom levels before converting.")
 
@@ -261,7 +261,7 @@ class FlatGeobuf(GeoFile):
         )
 
         subprocess.run(tip_args, check=True)
-        result: MBTiles = MBTiles(str(out_path))
+        result: PMTiles = PMTiles(str(out_path))
         result.fname = self._get_result_fname()
         return result
 
@@ -276,7 +276,7 @@ class FlatGeobuf(GeoFile):
         fname = self.fname
         fname = fname.replace(".fgb", "")
         result = "-".join(
-            (fname, str(self.min_zoom), str(self.max_zoom) + ".mbtiles")
+            (fname, str(self.min_zoom), str(self.max_zoom) + ".pmtiles")
         )
         return result
 
@@ -319,29 +319,6 @@ class FlatGeobuf(GeoFile):
                 result.append(f"--{k}")
             else:
                 result.append(f"--{k}={v}")
-        return result
-
-
-@dataclass
-class MBTiles(GeoFile):
-    """
-    Class that represents a MBTiles tileset file.
-    """
-
-    def convert(self):
-        out_path = Path(
-            self.fpath.parent.joinpath(self.fpath.stem + ".pmtiles")
-        )
-        pm_args = (
-            "./pmtiles",
-            "convert",
-            self.fpath,
-            out_path,
-        )
-        subprocess.run(pm_args, check=True)
-        result = PMTiles(str(out_path))
-        result.fname = self.fname
-        result.fname = result.fname.replace(".mbtiles", ".pmtiles")
         return result
 
 

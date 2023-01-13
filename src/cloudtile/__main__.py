@@ -158,8 +158,7 @@ class ConvertParser:
             metavar="conversions",
         )
         cls._build_vector2fgb(parser=subparsers)
-        cls._build_fgb2mbtiles(parser=subparsers)
-        cls._build_mb2pmtiles(parser=subparsers)
+        cls._build_fgb2pmtiles(parser=subparsers)
         cls._build_single_step(parser=subparsers)
 
     @staticmethod
@@ -171,21 +170,13 @@ class ConvertParser:
         ConvertParser._add_std_args(vector2fgb)
 
     @staticmethod
-    def _build_fgb2mbtiles(parser: _SubParsersAction) -> None:
-        fgb2mbtiles: ArgumentParser = parser.add_parser(
-            name="fgb2mbtiles",
+    def _build_fgb2pmtiles(parser: _SubParsersAction) -> None:
+        fgb2pmtiles: ArgumentParser = parser.add_parser(
+            name="fgb2pmtiles",
             help="Convert a file using Tippecanoe",
         )
-        ConvertParser._add_std_args(fgb2mbtiles)
-        ConvertParser._add_fgb_args(fgb2mbtiles)
-
-    @staticmethod
-    def _build_mb2pmtiles(parser: _SubParsersAction) -> None:
-        mb2pmtiles = parser.add_parser(
-            name="mb2pmtiles",
-            help="Convert a file using PMTiles Go executable",
-        )
-        ConvertParser._add_std_args(mb2pmtiles)
+        ConvertParser._add_std_args(fgb2pmtiles)
+        ConvertParser._add_fgb_args(fgb2pmtiles)
 
     @staticmethod
     def _build_single_step(parser: _SubParsersAction) -> None:
@@ -193,7 +184,7 @@ class ConvertParser:
             name="single-step",
             help=(
                 "Convert a vector file into an pmtile (equivalent to running "
-                "vector2fgb -> fgb2mbtiles -> mb2pmtiles). You can start from "
+                "vector2fgb -> fgb2pmtiles). You can start from "
                 "a vectorfile (i.e. .parquet) OR start from a .fgb file."
             ),
         )

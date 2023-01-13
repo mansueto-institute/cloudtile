@@ -17,7 +17,7 @@ All the files are hosted in S3 within the bucket: `cloudtile-files`.
 
 ## Installation
 
-You can install the package two ways:
+You can install the package two ways, please make sure to read the section on [dependencies](#dependencies)
 
 Directly from the GitHub repository:
 
@@ -59,9 +59,10 @@ If you want to run the code completely locally, you have to install its external
 
 - [GDAL](https://gdal.org/download.html)
 - [tippecanoe](https://github.com/felt/tippecanoe)
-- [go-pmtiles](https://github.com/protomaps/go-pmtiles)
 
 You can refer to our [Dockerfile](Dockerfile) to reference installation instructions for installing the [external dependencies](#external-dependencies). These are also found in their respective repositories.
+
+We install `gdal` using their Docker image, however if you want to install everything locally, you can install `gdal` via [`conda`](https://gdal.org/download.html#conda) making sure you install the `libgdal-arrow-parquet` if you'd like to convert a file starting from a `.parquet` file.
 
 ### Docker
 
@@ -76,8 +77,10 @@ docker build -t cloudtile:latest .
 And then running it (notice the passing of CLI arguments):
 
 ``` bash
-docker run --rm cloudtile:latest convert single-step blocks_SLE.parquet 5 9
+docker run --rm --env-file=.env cloudtile:latest convert single-step blocks_SLE.parquet 5 9
 ```
+
+Notice here that you will either have to mount a [Docker volume](https://stackoverflow.com/a/41092636/8998223) or you will have to copy the file into the container using the `COPY` command in the Dockerfile and also remove it from the `.dockerignore` file. Of course this is only when you want to put a file from your local file system into the container. It might be easier to first upload it to S3 and then run the same Docker conversion but using the `--s3` flag (see below).
 
 Or if you want to use S3 storage:
 
