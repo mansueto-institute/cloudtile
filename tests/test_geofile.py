@@ -16,7 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cloudtile.geofile import FlatGeobuf, GeoFile, MBTiles, PMTiles, VectorFile
+from cloudtile.geofile import FlatGeobuf, GeoFile, PMTiles, VectorFile
 
 
 @pytest.fixture(scope="session")
@@ -27,11 +27,6 @@ def vectorfile() -> VectorFile:
 @pytest.fixture(scope="function")
 def flatgeobuf() -> FlatGeobuf:
     yield FlatGeobuf(fpath_str="tests/test.fgb")
-
-
-@pytest.fixture(scope="session")
-def mbtiles() -> MBTiles:
-    return MBTiles(fpath_str="tests/test-5-6.mbtiles")
 
 
 class TestGeoFile:
@@ -229,13 +224,13 @@ class TestFlatGeobuf:
                 "--minimum-zoom=5",
                 "--maximum-zoom=6",
                 "-o",
-                str(Path("tests/test-5-6.mbtiles")),
+                str(Path("tests/test-5-6.pmtiles")),
                 str(Path("tests/test.fgb")),
             ],
             check=True,
         )
-        assert isinstance(result, MBTiles)
-        assert result.fname == "test-5-6.mbtiles"
+        assert isinstance(result, PMTiles)
+        assert result.fname == "test-5-6.pmtiles"
 
     @staticmethod
     def test_convert_no_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
@@ -245,7 +240,7 @@ class TestFlatGeobuf:
     @staticmethod
     def test_get_result_fname(flatgeobuf: FlatGeobuf) -> None:
         flatgeobuf.set_zoom_levels(5, 6)
-        assert flatgeobuf._get_result_fname() == "test-5-6.mbtiles"
+        assert flatgeobuf._get_result_fname() == "test-5-6.pmtiles"
 
     @staticmethod
     def test_read_config(flatgeobuf: FlatGeobuf) -> None:
@@ -274,30 +269,6 @@ class TestFlatGeobuf:
             "--no-tile-compression",
             "--force",
         ]
-
-
-class TestMBTiles:
-    """
-    Tests for MBTiles class
-    """
-
-    @staticmethod
-    @patch("subprocess.run")
-    def test_convert_to_list_args(
-        mock_run: MagicMock, mbtiles: MBTiles
-    ) -> None:
-        result = mbtiles.convert()
-        mock_run.assert_called_once_with(
-            (
-                "./pmtiles",
-                "convert",
-                Path("tests/test-5-6.mbtiles"),
-                Path("tests/test-5-6.pmtiles"),
-            ),
-            check=True,
-        )
-        assert isinstance(result, PMTiles)
-        assert result.fname == "test-5-6.pmtiles"
 
 
 class TestPMTiles:
