@@ -59,9 +59,10 @@ If you want to run the code completely locally, you have to install its external
 
 - [GDAL](https://gdal.org/download.html)
 - [tippecanoe](https://github.com/felt/tippecanoe)
-- [go-pmtiles](https://github.com/protomaps/go-pmtiles)
 
 You can refer to our [Dockerfile](Dockerfile) to reference installation instructions for installing the [external dependencies](#external-dependencies). These are also found in their respective repositories.
+
+We install `gdal` using their Docker image, however if you want to install everything locally, you can install `gdal` via [`conda`](https://gdal.org/download.html#conda) making sure you install the `libgdal-arrow-parquet` if you'd like to convert a file starting from a `.parquet` file.
 
 ### Docker
 
