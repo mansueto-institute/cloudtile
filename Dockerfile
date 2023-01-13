@@ -25,10 +25,8 @@ RUN \
     && make install
 
 COPY src src
-COPY setup.py setup.py
 COPY requirements.txt requirements.txt
-COPY dev-requirements.txt dev-requirements.txt
 COPY pyproject.toml pyproject.toml
-RUN pip install .
+RUN pip3 install .
 
 ENTRYPOINT ["cloudtile"]
