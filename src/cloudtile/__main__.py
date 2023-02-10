@@ -94,14 +94,18 @@ class CloudTileCLI:
                 self.args.config = None
             if self.args.memory and not self.args.ecs:
                 self.parser.error("--memory can only be used with --ecs")
+            if self.args.storage and not self.args.ecs:
+                self.parser.error("--storage can only be used with --ecs")
 
             if self.args.ecs:
-                task = ECSTask(self._get_args_for_ecs())
-                if self.args.memory is not None:
-                    try:
-                        task.memory = self.args.memory
-                    except ValueError as e:
-                        self.parser.error(e)
+                try:
+                    task = ECSTask(
+                        self._get_args_for_ecs(),
+                        memory=self.args.memory,
+                        storage=self.args.storage,
+                    )
+                except ValueError as e:
+                    self.parser.error(e)
                 print(
                     json.dumps(
                         task.run(), sort_keys=True, indent=4, default=str
@@ -129,9 +133,11 @@ class CloudTileCLI:
     def _get_args_for_ecs(self) -> list[str]:
         cli_args: dict = vars(self.args)
         args = []
-        for arg in cli_args.values():
-            if not isinstance(arg, bool) and arg is not None:
-                args.append(str(arg))
+        for arg, argval in cli_args.items():
+            if arg in {"memory", "storage"}:
+                continue
+            if not isinstance(argval, bool) and argval is not None:
+                args.append(str(argval))
         args.append("--s3")
         return args
 
@@ -213,6 +219,15 @@ class ConvertParser:
                 "Whether to override the 16GB memory limit. Must be only be "
                 "used with the --ecs flag. Additionally, the values must be "
                 "within the range of 4096 - 30720 in increments of 1024."
+            ),
+            type=int,
+        )
+        parser.add_argument(
+            "--storage",
+            help=(
+                "Whether to override the 50GB ephemeral storage default. Must "
+                "only be used with the --ecs flag. Additionally, values must "
+                "be within the range of 20 and 200 (GiBs)"
             ),
             type=int,
         )
