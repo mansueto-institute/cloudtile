@@ -76,6 +76,7 @@ class Converter:
         """
         if isinstance(self.origin, VectorFile):
             fgb: FlatGeobuf = self.origin.convert()
+            self.origin.remove()
         elif isinstance(self.origin, FlatGeobuf):
             fgb = self.origin
         else:
