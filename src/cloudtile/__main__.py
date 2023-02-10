@@ -216,18 +216,18 @@ class ConvertParser:
         parser.add_argument(
             "--memory",
             help=(
-                "Whether to override the 16GB memory limit. Must be only be "
+                "Whether to override the 64GB memory limit. Must be only be "
                 "used with the --ecs flag. Additionally, the values must be "
-                "within the range of 4096 - 30720 in increments of 1024."
+                "within the range of [32768, 122880] in increments of 8192."
             ),
             type=int,
         )
         parser.add_argument(
             "--storage",
             help=(
-                "Whether to override the 50GB ephemeral storage default. Must "
-                "only be used with the --ecs flag. Additionally, values must "
-                "be within the range of 20 and 200 (GiBs)"
+                "Whether to override the 100GB ephemeral storage default. "
+                "Must only be used with the --ecs flag. Additionally, values "
+                "must be within the range of 20 and 200 (GiBs)"
             ),
             type=int,
         )
