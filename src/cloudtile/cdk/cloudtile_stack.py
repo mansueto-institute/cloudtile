@@ -54,9 +54,9 @@ class CloudtileStack(Stack):
         task = ecs.FargateTaskDefinition(
             self,
             id="cloudtile-ecs-task",
-            cpu=4096,
-            memory_limit_mib=30720,
-            ephemeral_storage_gib=50,  # this is the default
+            cpu=16384,
+            memory_limit_mib=122880,
+            ephemeral_storage_gib=100,
             family="cloudtile",
         )
         bucket.grant_read_write(task.task_role)
