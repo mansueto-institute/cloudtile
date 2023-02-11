@@ -113,22 +113,27 @@ class CloudTileCLI:
                 )
                 sys.exit(0)
 
-            converter = Converter(
-                origin_str=self.args.filename, remote=self.args.s3
-            )
+            try:
+                converter = Converter(
+                    origin_str=self.args.filename, remote=self.args.s3
+                )
 
-            if self.args.convert_subcommand == "single-step":
-                converter.single_step_convert(
-                    min_zoom=self.args.min_zoom,
-                    max_zoom=self.args.max_zoom,
-                    config=self.args.config,
-                )
-            else:
-                converter.convert(
-                    min_zoom=self.args.min_zoom,
-                    max_zoom=self.args.max_zoom,
-                    config=self.args.config,
-                )
+                if self.args.convert_subcommand == "single-step":
+                    converter.single_step_convert(
+                        min_zoom=self.args.min_zoom,
+                        max_zoom=self.args.max_zoom,
+                        config=self.args.config,
+                    )
+                else:
+                    converter.convert(
+                        min_zoom=self.args.min_zoom,
+                        max_zoom=self.args.max_zoom,
+                        config=self.args.config,
+                    )
+            except ValueError as e:
+                self.parser.error(e)
+            except FileNotFoundError as e:
+                self.parser.error(e)
 
     def _get_args_for_ecs(self) -> list[str]:
         cli_args: dict = vars(self.args)
