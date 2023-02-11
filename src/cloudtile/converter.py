@@ -137,5 +137,7 @@ class Converter:
                     origin = VectorFile(fpath_str=origin_str)
             except ValueError as e:
                 raise e from e
+            except FileNotFoundError as e:
+                raise e from e
 
         return origin
