@@ -47,7 +47,7 @@ Dropping or merging a fraction of features to keep under tile size limits:
   # drop-smallest-as-needed: True
   coalesce-densest-as-needed: True
   # coalesce-fraction-as-needed: True
-  # coalesce-smallest-as-needed: True
+  coalesce-smallest-as-needed: True
   # force-feature-limit: True
   # cluster-densest-as-needed: True
 Dropping tightly overlapping features:
@@ -89,7 +89,7 @@ Setting or disabling tile size limits:
   maximum-tile-features: 20000
   # no-feature-limit: True
   # no-tile-size-limit: True
-  no-tile-compression: True
+  # no-tile-compression: True
   # no-tile-stats: True
   # tile-stats-attributes-limit: True
   # tile-stats-sample-values-limit: True
