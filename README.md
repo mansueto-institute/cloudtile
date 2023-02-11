@@ -8,8 +8,7 @@ Python tool for converting vector file formats to pmtiles files by scheduling jo
 
 - Convert (either locally, on a docker file, or on AWS ECS)
   - `{.geojson, .parquet, .gpkg}` -> `fgb`.
-  - `.fgb` -> `.mbtiles`.
-  - `.mbtiles` -> `.pmtiles`.
+  - `.pmtiles` -> `.pmtiles`.
 - Upload files to S3
 - Download files from S3
 
@@ -123,19 +122,22 @@ optional arguments:
 ```
 
 ``` bash
-cloudtile convert fgb2mbtiles -h
-usage: cloudtile convert fgb2mbtiles [-h] [--s3 | --ecs] [--config CONFIG] filename min_zoom max_zoom
+>>> cloudtile convert fgb2pmtiles -h
+usage: cloudtile convert fgb2pmtiles [-h] [--s3 | --ecs] [--memory MEMORY] [--storage STORAGE] [--config CONFIG] filename min_zoom max_zoom
 
 positional arguments:
-  filename         The file name to convert
-  min_zoom         The minimum zoom level to use in the conversion
-  max_zoom         The maximum zoom level to use in the conversion
+  filename           The file name to convert
+  min_zoom           The minimum zoom level to use in the conversion
+  max_zoom           The maximum zoom level to use in the conversion
 
 optional arguments:
-  -h, --help       show this help message and exit
-  --s3             Whether to use a remote file or use S3
-  --ecs            Whether to run the entire job on AWS ECS
-  --config CONFIG  The path to a config file for tippecanoe. If not passed the default config file is used.
+  -h, --help         show this help message and exit
+  --s3               Whether to use a remote file or use S3
+  --ecs              Whether to run the entire job on AWS ECS
+  --memory MEMORY    Whether to override the 64GB memory limit. Must be only be used with the --ecs flag. Additionally, the values must be within the range of [32768, 122880] in increments
+                     of 8192.
+  --storage STORAGE  Whether to override the 100GB ephemeral storage default. Must only be used with the --ecs flag. Additionally, values must be within the range of 20 and 200 (GiBs)
+  --config CONFIG    The path to a config file for tippecanoe. If not passed the default config file is used.
 ```
 
 ### AWS Credentials
@@ -243,10 +245,10 @@ cloudtile convert single-step --ecs blocks_SLE.parquet 2 9
 
 ### Tippecanoe Settings
 
-There are some opinionated default settings that Tippecanoe uses in `/src/cloudtile/tiles_config.yaml`, which are used by default. If you would like use a different configuration file, you can pass the path to it using the `--config` optional argument. The `--config` optional argument is only exposed either in the `single-step` or in the `fgb2mbtiles` convert sub command, since these are the only conversions that use Tippecanoe. You can pass it like this for example:
+There are some opinionated default settings that Tippecanoe uses in `/src/cloudtile/tiles_config.yaml`, which are used by default. If you would like use a different configuration file, you can pass the path to it using the `--config` optional argument. The `--config` optional argument is only exposed either in the `single-step` or in the `fgb2pmtiles` convert sub command, since these are the only conversions that use Tippecanoe. You can pass it like this for example:
 
 ``` bash
-cloudtile convert fgb2mbtiles --config /dir/myconfig.yaml myfile.fgb 5 10
+cloudtile convert fgb2pmtiles --config /dir/myconfig.yaml myfile.fgb 5 10
 ```
 
 Or via the single-step conversion from a `.fgb` file

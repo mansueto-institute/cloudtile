@@ -94,14 +94,18 @@ class CloudTileCLI:
                 self.args.config = None
             if self.args.memory and not self.args.ecs:
                 self.parser.error("--memory can only be used with --ecs")
+            if self.args.storage and not self.args.ecs:
+                self.parser.error("--storage can only be used with --ecs")
 
             if self.args.ecs:
-                task = ECSTask(self._get_args_for_ecs())
-                if self.args.memory is not None:
-                    try:
-                        task.memory = self.args.memory
-                    except ValueError as e:
-                        self.parser.error(e)
+                try:
+                    task = ECSTask(
+                        self._get_args_for_ecs(),
+                        memory=self.args.memory,
+                        storage=self.args.storage,
+                    )
+                except ValueError as e:
+                    self.parser.error(e)
                 print(
                     json.dumps(
                         task.run(), sort_keys=True, indent=4, default=str
@@ -109,29 +113,36 @@ class CloudTileCLI:
                 )
                 sys.exit(0)
 
-            converter = Converter(
-                origin_str=self.args.filename, remote=self.args.s3
-            )
+            try:
+                converter = Converter(
+                    origin_str=self.args.filename, remote=self.args.s3
+                )
 
-            if self.args.convert_subcommand == "single-step":
-                converter.single_step_convert(
-                    min_zoom=self.args.min_zoom,
-                    max_zoom=self.args.max_zoom,
-                    config=self.args.config,
-                )
-            else:
-                converter.convert(
-                    min_zoom=self.args.min_zoom,
-                    max_zoom=self.args.max_zoom,
-                    config=self.args.config,
-                )
+                if self.args.convert_subcommand == "single-step":
+                    converter.single_step_convert(
+                        min_zoom=self.args.min_zoom,
+                        max_zoom=self.args.max_zoom,
+                        config=self.args.config,
+                    )
+                else:
+                    converter.convert(
+                        min_zoom=self.args.min_zoom,
+                        max_zoom=self.args.max_zoom,
+                        config=self.args.config,
+                    )
+            except ValueError as e:
+                self.parser.error(e)
+            except FileNotFoundError as e:
+                self.parser.error(e)
 
     def _get_args_for_ecs(self) -> list[str]:
         cli_args: dict = vars(self.args)
         args = []
-        for arg in cli_args.values():
-            if not isinstance(arg, bool) and arg is not None:
-                args.append(str(arg))
+        for arg, argval in cli_args.items():
+            if arg in {"memory", "storage"}:
+                continue
+            if not isinstance(argval, bool) and argval is not None:
+                args.append(str(argval))
         args.append("--s3")
         return args
 
@@ -210,9 +221,18 @@ class ConvertParser:
         parser.add_argument(
             "--memory",
             help=(
-                "Whether to override the 16GB memory limit. Must be only be "
+                "Whether to override the 64GB memory limit. Must be only be "
                 "used with the --ecs flag. Additionally, the values must be "
-                "within the range of 4096 - 30720 in increments of 1024."
+                "within the range of [32768, 122880] in increments of 8192."
+            ),
+            type=int,
+        )
+        parser.add_argument(
+            "--storage",
+            help=(
+                "Whether to override the 100GB ephemeral storage default. "
+                "Must only be used with the --ecs flag. Additionally, values "
+                "must be within the range of 20 and 200 (GiBs)"
             ),
             type=int,
         )

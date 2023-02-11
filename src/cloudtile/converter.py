@@ -76,12 +76,14 @@ class Converter:
         """
         if isinstance(self.origin, VectorFile):
             fgb: FlatGeobuf = self.origin.convert()
+            if self.remote:
+                self.origin.remove()
         elif isinstance(self.origin, FlatGeobuf):
             fgb = self.origin
         else:
             raise NotImplementedError(
                 "Single step is only supported for conversions that start "
-                "with a VectorFile"
+                "with a VectorFile or a FlatGeobuf file."
             )
 
         fgb.set_zoom_levels(
@@ -134,6 +136,8 @@ class Converter:
                 else:
                     origin = VectorFile(fpath_str=origin_str)
             except ValueError as e:
+                raise e from e
+            except FileNotFoundError as e:
                 raise e from e
 
         return origin
