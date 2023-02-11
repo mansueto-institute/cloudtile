@@ -83,7 +83,7 @@ class Converter:
         else:
             raise NotImplementedError(
                 "Single step is only supported for conversions that start "
-                "with a VectorFile"
+                "with a VectorFile or a FlatGeobuf file."
             )
 
         fgb.set_zoom_levels(
