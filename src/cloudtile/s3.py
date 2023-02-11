@@ -101,10 +101,6 @@ class S3Storage:
                 error_msg = f"file {file_key} not found in S3"
                 logger.error(error_msg)
                 raise FileNotFoundError(error_msg) from e
-            if e.response["Error"]["Code"] == "400":
-                logger.error(e)
-                logger.error("Most likely due to expired credentials")
-                raise e from e
             logger.error(e)
             raise e from e
 
