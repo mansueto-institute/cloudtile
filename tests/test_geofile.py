@@ -216,10 +216,10 @@ class TestFlatGeobuf:
                 "tippecanoe",
                 "--read-parallel",
                 "--coalesce-densest-as-needed",
+                "--coalesce-smallest-as-needed",
                 "--simplification=10",
                 "--maximum-tile-bytes=2500000",
                 "--maximum-tile-features=20000",
-                "--no-tile-compression",
                 "--force",
                 "--minimum-zoom=5",
                 "--maximum-zoom=6",
@@ -249,10 +249,10 @@ class TestFlatGeobuf:
         assert cfg == {
             "read-parallel": True,
             "coalesce-densest-as-needed": True,
+            "coalesce-smallest-as-needed": True,
             "simplification": 10,
             "maximum-tile-bytes": 2500000,
             "maximum-tile-features": 20000,
-            "no-tile-compression": True,
             "force": True,
         }
 
@@ -263,10 +263,10 @@ class TestFlatGeobuf:
         assert arglist == [
             "--read-parallel",
             "--coalesce-densest-as-needed",
+            "--coalesce-smallest-as-needed",
             "--simplification=10",
             "--maximum-tile-bytes=2500000",
             "--maximum-tile-features=20000",
-            "--no-tile-compression",
             "--force",
         ]
 
