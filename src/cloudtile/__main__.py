@@ -11,9 +11,9 @@ Created on Wednesday, 31st December 1969 6:00:00 pm
 import json
 import logging
 import sys
-from argparse import ArgumentParser, _SubParsersAction
+from argparse import Action, ArgumentParser, Namespace, _SubParsersAction
 from importlib import metadata
-from typing import Optional
+from typing import Any, Optional, Sequence, Union
 
 from cloudtile.converter import Converter
 from cloudtile.ecs import ECSTask
@@ -249,7 +249,8 @@ class ConvertParser:
             type=int,
             help="The maximum zoom level to use in the conversion",
         )
-        parser.add_argument(
+        exc_group = parser.add_mutually_exclusive_group()
+        exc_group.add_argument(
             "--config",
             type=str,
             default=None,
@@ -257,6 +258,18 @@ class ConvertParser:
                 "The path to a config file for tippecanoe. If not passed the "
                 "default config file is used."
             ),
+        )
+        exc_group.add_argument(
+            "--tc-kwargs",
+            help=(
+                "Arguments to pass to tippecanoe. Must be in the form of "
+                "key if value is boolean, key=value if value is not boolean. "
+                "For example, --tc-kwargs no-tile-size-limit "
+                "simplification=10. maximum-zoom and minimum-zoom are "
+                "overridden by the min_zoom and max_zoom arguments."
+            ),
+            nargs="+",
+            action=ParseTCKwargs,
         )
 
 
@@ -318,6 +331,25 @@ class ManageParser:
                 "to download into."
             ),
         )
+
+
+class ParseTCKwargs(Action):
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: Optional[Union[str, Sequence[Any]]],
+        option_string: Optional[str] = None,
+    ) -> None:
+        if values is None:
+            raise ValueError("No values passed to ParseKwargs")
+        setattr(namespace, self.dest, {})
+        for value in values:
+            if "=" not in value:
+                key, value = value, True
+            else:
+                key, value = map(str.strip, value.split("="))
+            getattr(namespace, self.dest)[key] = value
 
 
 def main() -> None:
