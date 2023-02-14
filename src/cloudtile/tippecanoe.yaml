@@ -75,7 +75,7 @@ Line and polygon simplification:
   # no-tiny-polygon-reduction: False
   # tiny-polygon-size: null
   # visvalingam: False
-  Attempts to improve shared polygon boundaries:
+Attempts to improve shared polygon boundaries:
   # detect-shared-borders: False
   # grid-low-zooms: False
 Controlling clipping to tile boundaries:
