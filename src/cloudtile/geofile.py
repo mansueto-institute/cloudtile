@@ -8,21 +8,20 @@ Created on Wednesday, 31st December 1969 7:00:00 pm
 @purpose:   Conversion between file formats.
 ===============================================================================
 """
+# pylint: disable=invalid-name
 
 from __future__ import annotations
 
 import logging
 import subprocess
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from importlib.resources import open_text
+from dataclasses import InitVar, dataclass, field
 from pathlib import Path
 from shutil import copy
 from typing import Any, ClassVar, Optional
 
-import yaml
-
 from cloudtile.s3 import S3Storage
+from cloudtile.tippecanoe import TippecanoeSettings
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class GeoFile(ABC):
         return self.fpath.suffix[1:]
 
     @abstractmethod
-    def convert(self) -> GeoFile:
+    def convert(self, **kwargs) -> GeoFile:
         """
         Converts self into the target format and uploads the result into S3.
 
@@ -101,7 +100,7 @@ class GeoFile(ABC):
         self.fpath.unlink()
 
     @classmethod
-    def from_s3(cls, file_key: str) -> GeoFile:
+    def from_s3(cls, file_key: str, **kwargs) -> GeoFile:
         """
         Downloads the geofile from S3
 
@@ -115,7 +114,7 @@ class GeoFile(ABC):
         fpath = Path(file_key)
         s3 = S3Storage()
         tmp_path = s3.download_file(file_key=file_key, prefix=fpath.suffix[1:])
-        result = cls(str(tmp_path))
+        result = cls(str(tmp_path), **kwargs)
         result.fname = file_key
         return result
 
@@ -138,7 +137,7 @@ class VectorFile(GeoFile):
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-    def convert(self) -> FlatGeobuf:
+    def convert(self, **kwargs) -> FlatGeobuf:
         out_path = Path(self.fpath.parent.joinpath(self.fpath.stem + ".fgb"))
         ogr_args = (
             "ogr2ogr",
@@ -163,97 +162,36 @@ class FlatGeobuf(GeoFile):
     Class that represents a FlatGeobuf file.
     """
 
-    _min_zoom: int = field(init=False, repr=False)
-    _max_zoom: int = field(init=False, repr=False)
-    _cfg_path: Optional[Path] = field(init=False, repr=False, default=None)
+    cfg_path: InitVar[Optional[str]] = field(repr=False, default=None)
+    tc_override: dict[str, Any] = field(default_factory=dict, repr=False)
 
-    @property
-    def min_zoom(self) -> int:
+    def __post_init__(self, cfg_path: Optional[str] = None):
+        super().__post_init__()
+        self.tc_settings = TippecanoeSettings(cfg_path=cfg_path)
+        self.override_tc_settings(**self.tc_override)
+
+    def override_tc_settings(self, **kwargs) -> None:
         """
-        Sets the zoom level used by Tippecanoe.
-
-        Returns:
-            int: The minimum zoom level.
+        Overrides any settings already set in the TippecanoeSettings object.
+        Otherwise the new settings are added.
         """
-        return self._min_zoom
+        self.tc_settings.update(kwargs)
 
-    @min_zoom.setter
-    def min_zoom(self, value: int) -> None:
-        if value <= 0:
-            raise ValueError("min_zoom must be > 0")
-        if hasattr(self, "max_zoom"):
-            if value >= self.max_zoom:
-                raise ValueError("min_zoom < max_zoom must be true")
-        self._min_zoom = value
-
-    @property
-    def max_zoom(self) -> int:
-        """
-        Sets the zoom level used by Tippecanoe.
-
-        Returns:
-            int: The maximum zoom level.
-        """
-        return self._max_zoom
-
-    @max_zoom.setter
-    def max_zoom(self, value: int) -> None:
-        if value <= 0:
-            raise ValueError("max_zoom must be > 0")
-        if hasattr(self, "min_zoom"):
-            if value <= self.min_zoom:
-                raise ValueError("min_zoom < max_zoom must be true")
-        self._max_zoom = value
-
-    @property
-    def cfg_path(self) -> Optional[Path]:
-        """
-        The config file to use in Tippecanoe. By default it's set to None and
-        uses the .yaml file included in the python package.
-
-        Returns:
-            Optional[Path]: The path to the yaml file if set, otherwise it's
-                None and uses the default.
-        """
-        return self._cfg_path
-
-    @cfg_path.setter
-    def cfg_path(self, path_str: str) -> None:
-        """
-        Sets a custom tippecanoe configuration file to use when converting.
-
-        Args:
-            path_str (str): the absolute or relative path to where the
-                tippecanoe .yaml config file is located.
-        """
-        path = Path(path_str).resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"Config file {path} not found")
-        logger.info("Using custom Tippecanoe config file from %s", path)
-        self._cfg_path = path
-
-    def set_zoom_levels(self, min_zoom: int, max_zoom: int) -> None:
-        """
-        Sets the minimum and maximum zoom levels used by Tippecanoe.
-
-        Args:
-            min_zoom (int): The minimum zoom level.
-            max_zoom (int): The maximum zoom level.
-        """
-        self.min_zoom = min_zoom
-        self.max_zoom = max_zoom
-
-    def convert(self) -> PMTiles:
-        if not (hasattr(self, "min_zoom") and hasattr(self, "max_zoom")):
-            raise AttributeError("Must set zoom levels before converting.")
+    def convert(self, **kwargs) -> PMTiles:
+        try:
+            min_zoom, max_zoom = kwargs["minimum_zoom"], kwargs["maximum_zoom"]
+        except KeyError as e:
+            raise TypeError(
+                "minimum_zoom and maximum_zoom must be passed as kwargs."
+            ) from e
+        self.tc_settings["minimum-zoom"] = min_zoom
+        self.tc_settings["maximum-zoom"] = max_zoom
 
         out_path = Path(self.fpath.parent.joinpath(self._get_result_fname()))
         tip_args: list[str] = ["tippecanoe"]
-        tip_args.extend(self._convert_to_list_args(self._read_config()))
+        tip_args.extend(self.tc_settings.convert_to_list_args())
         tip_args.extend(
             [
-                f"--minimum-zoom={self.min_zoom}",
-                f"--maximum-zoom={self.max_zoom}",
                 "-o",
                 str(out_path),
                 str(self.fpath),
@@ -276,49 +214,12 @@ class FlatGeobuf(GeoFile):
         fname = self.fname
         fname = fname.replace(".fgb", "")
         result = "-".join(
-            (fname, str(self.min_zoom), str(self.max_zoom) + ".pmtiles")
+            (
+                fname,
+                str(self.tc_settings["minimum-zoom"]),
+                str(self.tc_settings["maximum-zoom"]) + ".pmtiles",
+            )
         )
-        return result
-
-    def _read_config(self) -> dict[str, Any]:
-        """
-        Parses a .yaml config file for Tippecanoe.
-
-        Returns:
-            dict[str, Any]: A flat dictionary with the uncommented settings in
-                the .yaml file.
-        """
-        if self.cfg_path is None:
-            with open_text("cloudtile", "tiles_config.yaml") as f:
-                config_dict: dict = yaml.safe_load(f)
-        else:
-            with open(self.cfg_path, "r", encoding="utf-8") as f:
-                config_dict = yaml.safe_load(f)
-
-        flat_dict = {}
-        for v in config_dict.values():
-            if v is not None:
-                flat_dict.update(v)
-        return flat_dict
-
-    @staticmethod
-    def _convert_to_list_args(args: dict[str, Any]) -> list[str]:
-        """
-        Converts a dictionary of Tippecanoe settings into a list of arguments
-        that can be pased to the CLI call.
-
-        Args:
-            args (dict[str, Any]): Dictionary of Tippecanoe CLI arguments.
-
-        Returns:
-            list[str]: List of CLI string arguments to be passed into the CLI.
-        """
-        result = []
-        for k, v in args.items():
-            if isinstance(v, bool):
-                result.append(f"--{k}")
-            else:
-                result.append(f"--{k}={v}")
         return result
 
 
@@ -328,5 +229,5 @@ class PMTiles(GeoFile):
     Class that represents a PMTiles tileset file.
     """
 
-    def convert(self) -> GeoFile:
+    def convert(self, **kwargs) -> GeoFile:
         raise NotImplementedError("PMTiles conversion is not implemented.")
