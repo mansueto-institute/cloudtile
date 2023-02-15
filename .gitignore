@@ -18,6 +18,7 @@ pmtiles
 !test.fgb
 !test-5-6.mbtiles
 !test-5-6.pmtiles
+!test-7-9.pmtiles
 
 # testing files
 coverage-junit.xml
