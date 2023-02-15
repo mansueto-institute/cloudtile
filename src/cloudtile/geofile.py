@@ -184,8 +184,10 @@ class FlatGeobuf(GeoFile):
             raise TypeError(
                 "minimum_zoom and maximum_zoom must be passed as kwargs."
             ) from e
-        self.tc_settings["minimum-zoom"] = min_zoom
-        self.tc_settings["maximum-zoom"] = max_zoom
+        if "minimum-zoom" not in self.tc_settings:
+            self.tc_settings["minimum-zoom"] = min_zoom
+        if "maximum-zoom" not in self.tc_settings:
+            self.tc_settings["maximum-zoom"] = max_zoom
 
         out_path = Path(self.fpath.parent.joinpath(self._get_result_fname()))
         tip_args: list[str] = ["tippecanoe"]
