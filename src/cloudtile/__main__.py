@@ -275,8 +275,9 @@ class ConvertParser:
                 "Arguments to pass to tippecanoe. Must be in the form of "
                 "key if value is boolean, key=value if value is not boolean. "
                 "For example, --tc-kwargs no-tile-size-limit "
-                "simplification=10. maximum_zoom and minimum_zoom are "
-                "overridden by the min_zoom and max_zoom arguments."
+                "simplification=10. If you pass --maximum-zoom or "
+                "--minimum-zoom to the --tc-kwargs call, then these will "
+                "override the ones passed via the CLI"
             ),
             nargs="+",
             action=ParseTCKwargs,
