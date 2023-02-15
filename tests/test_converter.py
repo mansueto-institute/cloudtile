@@ -41,7 +41,7 @@ def test_convert_vector(remote: bool, converter: Converter) -> None:
             result.remove.assert_called_once()
 
 
-@pytest.mark.parametrize("config", [None, "tests/test.yaml"])
+@pytest.mark.parametrize("config", [None, "src/cloudtile/tippecanoe.yaml"])
 def test_convert_fgb(converter: Converter, config: Optional[str]) -> None:
     with patch.object(Converter, "origin", MagicMock(spec=FlatGeobuf)):
         result: MagicMock = MagicMock(name="result")
@@ -50,7 +50,7 @@ def test_convert_fgb(converter: Converter, config: Optional[str]) -> None:
         converter.origin.convert.assert_called_once()
 
 
-@pytest.mark.parametrize("config", [None, "tests/test.yaml"])
+@pytest.mark.parametrize("config", [None, "src/cloudtile/tippecanoe.yaml"])
 @pytest.mark.parametrize("remote", [True, False])
 def test_single_step_convert_vector(
     converter: Converter, config: Optional[str], remote: bool
@@ -73,7 +73,7 @@ def test_single_step_convert_vector(
         fgb.convert.assert_called_once()
 
 
-@pytest.mark.parametrize("config", [None, "tests/test.yaml"])
+@pytest.mark.parametrize("config", [None, "src/cloudtile/tippecanoe.yaml"])
 @pytest.mark.parametrize("remote", [True, False])
 def test_single_step_convert_fgb(
     converter: Converter, config: Optional[str], remote: bool

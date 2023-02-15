@@ -111,4 +111,7 @@ class TippecanoeSettings(UserDict):
 
         config_dict = yaml.safe_load(data)
 
+        if config_dict is None:
+            raise ValueError(f"{path} seems to be empty")
+
         return TippecanoeSettings._parse_settings_dict(config_dict)
