@@ -137,18 +137,17 @@ class TestFlatGeobuf:
     @staticmethod
     @patch("subprocess.run")
     def test_convert(mock_run: MagicMock, flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.set_zoom_levels(5, 6)
-        result = flatgeobuf.convert()
+        result = flatgeobuf.convert(minimum_zoom=5, maximum_zoom=6)
         mock_run.assert_called_once_with(
             [
                 "tippecanoe",
+                "--force",
                 "--read-parallel",
                 "--coalesce-densest-as-needed",
                 "--simplification=10",
                 "--maximum-tile-bytes=2500000",
                 "--maximum-tile-features=20000",
                 "--no-tile-compression",
-                "--force",
                 "--minimum-zoom=5",
                 "--maximum-zoom=6",
                 "-o",
