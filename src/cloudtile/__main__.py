@@ -115,13 +115,15 @@ class CloudTileCLI:
                         self.args.config = None
                     if "minimum_zoom" not in self.args:
                         self.args.minimum_zoom = None
+                    if "maximum_zoom" not in self.args:
+                        self.args.maximum_zoom = None
 
                     if self.args.convert_subcommand == "single-step":
                         converter.single_step_convert(
                             minimum_zoom=self.args.minimum_zoom,
                             maximum_zoom=self.args.maximum_zoom,
                             config=self.args.config,
-                            **self.args.tc_kwargs
+                            **self.args.tc_kwargs,
                         )
                     else:
                         converter.convert(
