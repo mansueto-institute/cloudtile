@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cloudtile.geofile import FlatGeobuf, GeoFile, PMTiles, VectorFile
+from cloudtile.tippecanoe import TippecanoeSettings
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +27,9 @@ def vectorfile() -> VectorFile:
 
 @pytest.fixture(scope="function")
 def flatgeobuf() -> FlatGeobuf:
-    yield FlatGeobuf(fpath_str="tests/test.fgb")
+    fgb = FlatGeobuf(fpath_str="tests/test.fgb")
+    yield fgb
+    fgb.tc_settings = TippecanoeSettings()
 
 
 class TestGeoFile:
@@ -158,6 +161,34 @@ class TestFlatGeobuf:
         )
         assert isinstance(result, PMTiles)
         assert result.fname == "test-5-6.pmtiles"
+
+    @staticmethod
+    @patch("subprocess.run")
+    def test_convert_with_tc_settings(
+        mock_run: MagicMock, flatgeobuf: FlatGeobuf
+    ) -> None:
+        flatgeobuf.override_tc_settings(minimum_zoom=7, maximum_zoom=9)
+        result = flatgeobuf.convert(minimum_zoom=5, maximum_zoom=6)
+        mock_run.assert_called_once_with(
+            [
+                "tippecanoe",
+                "--force",
+                "--read-parallel",
+                "--coalesce-densest-as-needed",
+                "--simplification=10",
+                "--maximum-tile-bytes=2500000",
+                "--maximum-tile-features=20000",
+                "--no-tile-compression",
+                "--minimum-zoom=7",
+                "--maximum-zoom=9",
+                "-o",
+                str(Path("tests/test-7-9.pmtiles")),
+                str(Path("tests/test.fgb")),
+            ],
+            check=True,
+        )
+        assert isinstance(result, PMTiles)
+        assert result.fname == "test-7-9.pmtiles"
 
     @staticmethod
     def test_convert_no_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
