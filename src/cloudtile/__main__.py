@@ -260,8 +260,7 @@ class ConvertParser:
             help="The maximum zoom level to use in the conversion",
             default=None,
         )
-        exc_group = parser.add_mutually_exclusive_group()
-        exc_group.add_argument(
+        parser.add_argument(
             "--config",
             type=str,
             default=None,
@@ -270,7 +269,7 @@ class ConvertParser:
                 "default config file is used."
             ),
         )
-        exc_group.add_argument(
+        parser.add_argument(
             "--tc-kwargs",
             help=(
                 "Arguments to pass to tippecanoe. Must be in the form of "
