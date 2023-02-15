@@ -25,7 +25,7 @@ Projection of input:
 Zoom levels:
   # maximum-zoom: null
   # minimum-zoom: null
-  # extend-zooms-if-still-droppping: False
+  # extend-zooms-if-still-dropping: False
   # one-tile: null
 Tile resolution:
   # full-detail: null
