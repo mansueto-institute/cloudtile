@@ -42,16 +42,18 @@ class TippecanoeSettings(UserDict):
             raise KeyError(f"Setting {key} is not a valid Tippecanoe setting.")
 
         if key == "maximum-zoom":
-            if "minimum-zoom" in self and value < self["minimum-zoom"]:
-                raise ValueError(
-                    "Maximum zoom cannot be less than minimum zoom."
-                )
+            if value != "g":
+                if "minimum-zoom" in self and value < self["minimum-zoom"]:
+                    raise ValueError(
+                        "Maximum zoom cannot be less than minimum zoom."
+                    )
 
         if key == "minimum-zoom":
-            if "maximum-zoom" in self and value > self["maximum-zoom"]:
-                raise ValueError(
-                    "Minimum zoom cannot be greater than maximum zoom."
-                )
+            if self.get(["maximum-zoom"] != "g", None):
+                if "maximum-zoom" in self and value > self["maximum-zoom"]:
+                    raise ValueError(
+                        "Minimum zoom cannot be greater than maximum zoom."
+                    )
 
         super().__setitem__(key, value)
 
