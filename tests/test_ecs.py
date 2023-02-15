@@ -195,3 +195,16 @@ def test_get_default_security_group_bad_lookup(
     with pytest.raises(LookupError):
         ecstask._get_default_security_group()
         mock_default_vpc_id.assert_called_once()
+
+
+def test_parse_cli_args(ecstask: ECSTask) -> None:
+    assert ecstask._parse_cli_args(
+        ["test", "test", "--tc-kwargs one=one =two=two three"]
+    ) == [
+        "test",
+        "test",
+        "--tc-kwargs",
+        "one=one",
+        "=two=two",
+        "three",
+    ]
