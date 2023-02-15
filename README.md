@@ -245,6 +245,8 @@ cloudtile convert single-step --ecs blocks_SLE.parquet 2 9
 
 ### Tippecanoe Settings
 
+#### Using a `.yaml` file
+
 There are some opinionated default settings that Tippecanoe uses in `/src/cloudtile/tiles_config.yaml`, which are used by default. If you would like use a different configuration file, you can pass the path to it using the `--config` optional argument. The `--config` optional argument is only exposed either in the `single-step` or in the `fgb2pmtiles` convert sub command, since these are the only conversions that use Tippecanoe. You can pass it like this for example:
 
 ``` bash
@@ -261,4 +263,26 @@ Or via the single-step conversion from a vectorfile:
 
 ``` bash
 cloudtile convert single-step --config /dir/myconfig.yaml myfile.parquet 5 10
+```
+
+#### Passing settings directly
+
+You can also pass settings directly to `tippecanoe` via the `--tc-kwargs` optional command in the CLI. The settings in the default `tippecanoe.yaml` file will always be applied, unless overridden. If you pass a setting not present in the defaults then it will be added to the defaults.
+
+For example, the `--force` setting defaults to `True` in [tippecanoe.yaml](/src/cloudtile/tippecanoe.yaml). If you want to override this setting, you can pass:
+
+``` bash
+cloudtile convert single-step blocks_SLE.parquet 9 g --tc-kwargs force=False
+```
+
+This language of `--tc-kwargs setting=False` is only needed to override default settings that are `True`. For example, if you want to add a *new* setting `--hilbert` as `True` you can pass:
+
+``` bash
+cloudtile convert single-step blocks_SLE.parquet 9 g --tc-kwargs hilbert
+```
+
+You can also pass these settings to an [ECS](#fully-remote) task like so:
+
+``` bash
+cloudtile convert single-step regions_map.parquet 9 g --ecs --tc-kwargs coalesce-densest-as-needed extend-zooms-if-still-dropping visvalingam
 ```
