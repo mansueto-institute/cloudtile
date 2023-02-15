@@ -148,7 +148,7 @@ class ECSTask:
         for arg in cli_args:
             args.extend(arg.split())
         if len(args) == 0:
-            args.append('')
+            args.append("")
         return args
 
     @lru_cache
