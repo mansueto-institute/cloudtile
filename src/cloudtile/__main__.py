@@ -86,12 +86,6 @@ class CloudTileCLI:
                 self.convert_parser.print_usage()
                 sys.exit()
 
-            if "min_zoom" not in self.args:
-                self.args.min_zoom = None
-            if "max_zoom" not in self.args:
-                self.args.max_zoom = None
-            if "config" not in self.args:
-                self.args.config = None
             if self.args.memory and not self.args.ecs:
                 self.parser.error("--memory can only be used with --ecs")
             if self.args.storage and not self.args.ecs:
@@ -111,29 +105,34 @@ class CloudTileCLI:
                         task.run(), sort_keys=True, indent=4, default=str
                     )
                 )
-                sys.exit(0)
-
-            try:
-                converter = Converter(
-                    origin_str=self.args.filename, remote=self.args.s3
-                )
-
-                if self.args.convert_subcommand == "single-step":
-                    converter.single_step_convert(
-                        min_zoom=self.args.min_zoom,
-                        max_zoom=self.args.max_zoom,
-                        config=self.args.config,
+            else:
+                try:
+                    converter = Converter(
+                        origin_str=self.args.filename, remote=self.args.s3
                     )
-                else:
-                    converter.convert(
-                        min_zoom=self.args.min_zoom,
-                        max_zoom=self.args.max_zoom,
-                        config=self.args.config,
-                    )
-            except ValueError as e:
-                self.parser.error(e)
-            except FileNotFoundError as e:
-                self.parser.error(e)
+
+                    if "config" not in self.args:
+                        self.args.config = None
+                    if "minimum_zoom" not in self.args:
+                        self.args.minimum_zoom = None
+
+                    if self.args.convert_subcommand == "single-step":
+                        converter.single_step_convert(
+                            minimum_zoom=self.args.minimum_zoom,
+                            maximum_zoom=self.args.maximum_zoom,
+                            config=self.args.config,
+                            **self.args.tc_kwargs
+                        )
+                    else:
+                        converter.convert(
+                            minimum_zoom=self.args.minimum_zoom,
+                            maximum_zoom=self.args.maximum_zoom,
+                            config=self.args.config,
+                        )
+                except ValueError as e:
+                    self.parser.error(e)
+                except FileNotFoundError as e:
+                    self.parser.error(e)
 
     def _get_args_for_ecs(self) -> list[str]:
         cli_args: dict = vars(self.args)
@@ -240,14 +239,16 @@ class ConvertParser:
     @staticmethod
     def _add_fgb_args(parser: ArgumentParser) -> None:
         parser.add_argument(
-            "min_zoom",
+            "minimum_zoom",
             type=int,
             help="The minimum zoom level to use in the conversion",
+            default=None
         )
         parser.add_argument(
-            "max_zoom",
+            "maximum_zoom",
             type=int,
             help="The maximum zoom level to use in the conversion",
+            default=None
         )
         exc_group = parser.add_mutually_exclusive_group()
         exc_group.add_argument(
@@ -265,11 +266,12 @@ class ConvertParser:
                 "Arguments to pass to tippecanoe. Must be in the form of "
                 "key if value is boolean, key=value if value is not boolean. "
                 "For example, --tc-kwargs no-tile-size-limit "
-                "simplification=10. maximum-zoom and minimum-zoom are "
+                "simplification=10. maximum_zoom and minimum_zoom are "
                 "overridden by the min_zoom and max_zoom arguments."
             ),
             nargs="+",
             action=ParseTCKwargs,
+            default={}
         )
 
 
@@ -334,6 +336,12 @@ class ManageParser:
 
 
 class ParseTCKwargs(Action):
+    """Class to parse the tc-kwargs argument
+
+    The tc-kwargs argument is a list of strings that are passed to tippecanoe
+    as CLI options. This class parses the list of strings and converts them
+    into a dictionary that can be passed to the TippecanoeSettings class.
+    """
     def __call__(
         self,
         parser: ArgumentParser,
