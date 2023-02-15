@@ -252,13 +252,13 @@ class ConvertParser:
             "minimum_zoom",
             type=int,
             help="The minimum zoom level to use in the conversion",
-            default=None
+            default=None,
         )
         parser.add_argument(
             "maximum_zoom",
-            type=int,
+            type=lambda x: int(x) if x != "g" else x,
             help="The maximum zoom level to use in the conversion",
-            default=None
+            default=None,
         )
         exc_group = parser.add_mutually_exclusive_group()
         exc_group.add_argument(
@@ -281,7 +281,7 @@ class ConvertParser:
             ),
             nargs="+",
             action=ParseTCKwargs,
-            default={}
+            default={},
         )
 
 
@@ -352,6 +352,7 @@ class ParseTCKwargs(Action):
     as CLI options. This class parses the list of strings and converts them
     into a dictionary that can be passed to the TippecanoeSettings class.
     """
+
     def __call__(
         self,
         parser: ArgumentParser,
