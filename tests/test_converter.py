@@ -41,17 +41,16 @@ def test_convert_vector(remote: bool, converter: Converter) -> None:
             result.remove.assert_called_once()
 
 
-@pytest.mark.parametrize("config", [None, "tests/test.toml"])
+@pytest.mark.parametrize("config", [None, "src/cloudtile/tippecanoe.yaml"])
 def test_convert_fgb(converter: Converter, config: Optional[str]) -> None:
     with patch.object(Converter, "origin", MagicMock(spec=FlatGeobuf)):
         result: MagicMock = MagicMock(name="result")
         converter.origin.convert.return_value = result
         converter.convert(min_zoom=1, max_zoom=2, config=config)
         converter.origin.convert.assert_called_once()
-        converter.origin.set_zoom_levels.assert_called_once()
 
 
-@pytest.mark.parametrize("config", [None, "tests/test.toml"])
+@pytest.mark.parametrize("config", [None, "src/cloudtile/tippecanoe.yaml"])
 @pytest.mark.parametrize("remote", [True, False])
 def test_single_step_convert_vector(
     converter: Converter, config: Optional[str], remote: bool
@@ -64,7 +63,6 @@ def test_single_step_convert_vector(
         fgb.convert.return_value = pmt
         converter.single_step_convert(min_zoom=1, max_zoom=2, config=config)
         converter.origin.convert.assert_called_once()
-        fgb.set_zoom_levels.assert_called_once()
         if remote:
             converter.origin.remove.assert_called_once()
             fgb.remove.assert_called_once()
@@ -75,7 +73,7 @@ def test_single_step_convert_vector(
         fgb.convert.assert_called_once()
 
 
-@pytest.mark.parametrize("config", [None, "tests/test.toml"])
+@pytest.mark.parametrize("config", [None, "src/cloudtile/tippecanoe.yaml"])
 @pytest.mark.parametrize("remote", [True, False])
 def test_single_step_convert_fgb(
     converter: Converter, config: Optional[str], remote: bool
@@ -86,7 +84,6 @@ def test_single_step_convert_fgb(
         converter.origin.convert.return_value = pmt
         converter.single_step_convert(min_zoom=1, max_zoom=2, config=config)
         converter.origin.convert.assert_called_once()
-        converter.origin.set_zoom_levels.assert_called_once()
 
         if remote:
             pmt.upload.assert_called_once()

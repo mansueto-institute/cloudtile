@@ -1,0 +1,127 @@
+############################ TIPPECANOE OPTIONS ###############################
+## To use the below options, uncomment the row and set the YAML value
+## See https://github.com/felt/tippecanoe for full options docs
+##
+## All the settings that have `null` as a value take in a specific type of
+## value that should be look up in the documentation link above. Otherwise
+## they take a boolean.
+
+Output tileset:
+  # output: null
+  # output-to-directory: null
+  force: True
+  # allow-existing: False
+Tileset description and attribution:
+  # name: null
+  # attribution: null
+  # description: null
+Input files and layer names:
+  # layer: null
+  # named-layer: null
+Parallel processing of input:
+  read-parallel: True
+Projection of input:
+  # projection: null
+Zoom levels:
+  # maximum-zoom: null
+  # minimum-zoom: null
+  # extend-zooms-if-still-dropping: False
+  # one-tile: null
+Tile resolution:
+  # full-detail: null
+  # low-detail: null
+  # minimum-detail: null
+Filtering feature attributes:
+  # exclude: null
+  # include: null
+  # exclude-all: False
+Modifying feature attributes:
+  # attribute-type: null
+  # attribute-description: null
+  # accumulate-attribute: null
+  # empty-csv-columns-are-null: null
+  # convert-stringified-ids-to-numbers: null
+  # use-attribute-for-id: null
+  # single-precision: False
+Filtering features by attributes:
+  # feature-filter-file: null
+  # feature-filter: null
+Dropping a fixed fraction of features by zoom level:
+  # drop-rate: null
+  # base-zoom: null
+  # drop-denser: null
+  # limit-base-zoom-to-maximum-zoom: False
+  # drop-lines: False
+  # drop-polygons: False
+  # cluster-distance: null
+Dropping or merging a fraction of features to keep under tile size limits:
+  # drop-densest-as-needed: False
+  # drop-fraction-as-needed: False
+  # drop-smallest-as-needed: False
+  # coalesce-smallest-as-needed: False
+  coalesce-densest-as-needed: True
+  # coalesce-fraction-as-needed: False
+  # force-feature-limit: False
+  # cluster-densest-as-needed: False
+Dropping tightly overlapping features:
+  # gamma: null
+  # increase-gamma-as-needed: False
+Line and polygon simplification:
+  simplification: 10
+  # no-line-simplification: False
+  # simplify-only-low-zooms: False
+  # simplification-at-maximum-zoom: null
+  # no-simplification-of-shared-nodes: False
+  # no-tiny-polygon-reduction: False
+  # tiny-polygon-size: null
+  # visvalingam: False
+Attempts to improve shared polygon boundaries:
+  # detect-shared-borders: False
+  # grid-low-zooms: False
+Controlling clipping to tile boundaries:
+  # buffer: null
+  # no-clipping: False
+  # no-duplication: False
+Reordering features within each tile:
+  # preserve-input-order: False
+  # coalesce: False
+  # reorder: False
+  # reverse: False
+  # hilbert: False
+  # order-by: null
+  # order-descending-by: null
+  # order-smallest-first: False
+  # order-largest-first: False
+Adding calculated attributes:
+  # calculate-feature-density: False
+  # generate-ids: False
+Trying to correct bad source geometry:
+  # detect-longitude-wraparound: False
+  # use-source-polygon-winding: False
+  # reverse-source-polygon-winding: False
+  ## Note: clip bounds as minlon,minlat,maxlon,maxlat
+  # clip-bounding-box: null
+  # convert-polygons-to-label-points: False
+Setting or disabling tile size limits:
+  maximum-tile-bytes: 2500000
+  maximum-tile-features: 20000
+  # limit-tile-feature-count: null
+  # limit-tile-feature-count-at-maximum-zoom: null
+  # no-feature-limit: False
+  # no-tile-size-limit: False
+  no-tile-compression: True
+  # no-tile-stats: False
+  # tile-stats-attributes-limit: null
+  # tile-stats-sample-values-limit: null
+  # tile-stats-values-limit: null
+Temporary storage:
+  # temporary-directory: null
+Progress indicator:
+  # quiet: False
+  # no-progress-indicator: False
+  # progress-interval: null
+  # json-progress: False
+  # version: False
+Filters:
+  # prefilter: null
+  # postfilter: null

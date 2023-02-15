@@ -11,9 +11,9 @@ Created on Wednesday, 31st December 1969 6:00:00 pm
 import json
 import logging
 import sys
-from argparse import ArgumentParser, _SubParsersAction
+from argparse import Action, ArgumentParser, Namespace, _SubParsersAction
 from importlib import metadata
-from typing import Optional
+from typing import Any, Optional, Sequence, Union
 
 from cloudtile.converter import Converter
 from cloudtile.ecs import ECSTask
@@ -86,12 +86,6 @@ class CloudTileCLI:
                 self.convert_parser.print_usage()
                 sys.exit()
 
-            if "min_zoom" not in self.args:
-                self.args.min_zoom = None
-            if "max_zoom" not in self.args:
-                self.args.max_zoom = None
-            if "config" not in self.args:
-                self.args.config = None
             if self.args.memory and not self.args.ecs:
                 self.parser.error("--memory can only be used with --ecs")
             if self.args.storage and not self.args.ecs:
@@ -111,29 +105,36 @@ class CloudTileCLI:
                         task.run(), sort_keys=True, indent=4, default=str
                     )
                 )
-                sys.exit(0)
-
-            try:
-                converter = Converter(
-                    origin_str=self.args.filename, remote=self.args.s3
-                )
-
-                if self.args.convert_subcommand == "single-step":
-                    converter.single_step_convert(
-                        min_zoom=self.args.min_zoom,
-                        max_zoom=self.args.max_zoom,
-                        config=self.args.config,
+            else:
+                try:
+                    converter = Converter(
+                        origin_str=self.args.filename, remote=self.args.s3
                     )
-                else:
-                    converter.convert(
-                        min_zoom=self.args.min_zoom,
-                        max_zoom=self.args.max_zoom,
-                        config=self.args.config,
-                    )
-            except ValueError as e:
-                self.parser.error(e)
-            except FileNotFoundError as e:
-                self.parser.error(e)
+
+                    if "config" not in self.args:
+                        self.args.config = None
+                    if "minimum_zoom" not in self.args:
+                        self.args.minimum_zoom = None
+                    if "maximum_zoom" not in self.args:
+                        self.args.maximum_zoom = None
+
+                    if self.args.convert_subcommand == "single-step":
+                        converter.single_step_convert(
+                            minimum_zoom=self.args.minimum_zoom,
+                            maximum_zoom=self.args.maximum_zoom,
+                            config=self.args.config,
+                            **self.args.tc_kwargs,
+                        )
+                    else:
+                        converter.convert(
+                            minimum_zoom=self.args.minimum_zoom,
+                            maximum_zoom=self.args.maximum_zoom,
+                            config=self.args.config,
+                        )
+                except ValueError as e:
+                    self.parser.error(e)
+                except FileNotFoundError as e:
+                    self.parser.error(e)
 
     def _get_args_for_ecs(self) -> list[str]:
         cli_args: dict = vars(self.args)
@@ -141,9 +142,17 @@ class CloudTileCLI:
         for arg, argval in cli_args.items():
             if arg in {"memory", "storage"}:
                 continue
-            if not isinstance(argval, bool) and argval is not None:
+            if arg == "tc_kwargs":
+                tc_settings = ["--tc-kwargs"]
+                for k, v in argval.items():
+                    if isinstance(v, bool):
+                        tc_settings.append(f"{k}")
+                    else:
+                        tc_settings.append(f"{k}={v}")
+            elif not isinstance(argval, bool) and argval is not None:
                 args.append(str(argval))
         args.append("--s3")
+        args.append(" ".join(tc_settings))
         return args
 
 
@@ -240,14 +249,16 @@ class ConvertParser:
     @staticmethod
     def _add_fgb_args(parser: ArgumentParser) -> None:
         parser.add_argument(
-            "min_zoom",
+            "minimum_zoom",
             type=int,
             help="The minimum zoom level to use in the conversion",
+            default=None,
         )
         parser.add_argument(
-            "max_zoom",
-            type=int,
+            "maximum_zoom",
+            type=lambda x: int(x) if x != "g" else x,
             help="The maximum zoom level to use in the conversion",
+            default=None,
         )
         parser.add_argument(
             "--config",
@@ -257,6 +268,20 @@ class ConvertParser:
                 "The path to a config file for tippecanoe. If not passed the "
                 "default config file is used."
             ),
+        )
+        parser.add_argument(
+            "--tc-kwargs",
+            help=(
+                "Arguments to pass to tippecanoe. Must be in the form of "
+                "key if value is boolean, key=value if value is not boolean. "
+                "For example, --tc-kwargs no-tile-size-limit "
+                "simplification=10. If you pass --maximum-zoom or "
+                "--minimum-zoom to the --tc-kwargs call, then these will "
+                "override the ones passed via the CLI"
+            ),
+            nargs="+",
+            action=ParseTCKwargs,
+            default={},
         )
 
 
@@ -318,6 +343,36 @@ class ManageParser:
                 "to download into."
             ),
         )
+
+
+class ParseTCKwargs(Action):
+    """Class to parse the tc-kwargs argument
+
+    The tc-kwargs argument is a list of strings that are passed to tippecanoe
+    as CLI options. This class parses the list of strings and converts them
+    into a dictionary that can be passed to the TippecanoeSettings class.
+    """
+
+    def __call__(
+        self,
+        parser: ArgumentParser,
+        namespace: Namespace,
+        values: Optional[Union[str, Sequence[Any]]],
+        option_string: Optional[str] = None,
+    ) -> None:
+        if values is None:
+            raise ValueError("No values passed to ParseKwargs")
+        setattr(namespace, self.dest, {})
+        for value in values:
+            if "=" not in value:
+                key, value = value, True
+            else:
+                key, value = map(str.strip, value.split("="))
+                if value == "True":
+                    value = True
+                elif value == "False":
+                    value = False
+            getattr(namespace, self.dest)[key] = value
 
 
 def main() -> None:

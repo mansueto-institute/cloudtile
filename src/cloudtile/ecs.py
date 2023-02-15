@@ -116,7 +116,7 @@ class ECSTask:
             "containerOverrides": [
                 {
                     "name": "cloudtile",
-                    "command": self.cli_args,
+                    "command": self._parse_cli_args(self.cli_args),
                     "memoryReservation": 65536,
                 }
             ]
@@ -141,6 +141,15 @@ class ECSTask:
             overrides=overrides,
         )
         return response
+
+    @staticmethod
+    def _parse_cli_args(cli_args: list[str]) -> list[str]:
+        args: list[str] = []
+        for arg in cli_args:
+            args.extend(arg.split())
+        if len(args) == 0:
+            args.append("")
+        return args
 
     @lru_cache
     def _get_default_vpc_id(self) -> str:

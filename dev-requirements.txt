@@ -1,7 +1,7 @@
-aws-cdk-lib==2.53.0
+aws-cdk-lib
 black
 bump2version
-constructs>=10.0.0,<11.0.0
+constructs
 flake8
 moto[s3]
 mypy

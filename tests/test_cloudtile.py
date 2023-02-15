@@ -34,3 +34,7 @@ def test_import_geofile():
 
 def test_import_s3():
     from cloudtile import s3  # noqa: F401
+
+
+def test_import_tippcanoe():
+    from cloudtile import tippecanoe  # noqa: F401

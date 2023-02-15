@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cloudtile.geofile import FlatGeobuf, GeoFile, PMTiles, VectorFile
+from cloudtile.tippecanoe import TippecanoeSettings
 
 
 @pytest.fixture(scope="session")
@@ -26,7 +27,9 @@ def vectorfile() -> VectorFile:
 
 @pytest.fixture(scope="function")
 def flatgeobuf() -> FlatGeobuf:
-    yield FlatGeobuf(fpath_str="tests/test.fgb")
+    fgb = FlatGeobuf(fpath_str="tests/test.fgb")
+    yield fgb
+    fgb.tc_settings = TippecanoeSettings()
 
 
 class TestGeoFile:
@@ -135,92 +138,19 @@ class TestFlatGeobuf:
     """
 
     @staticmethod
-    def test_min_zoom(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.min_zoom = 1
-        assert flatgeobuf.min_zoom == 1
-
-    @staticmethod
-    def test_min_zoom_setter_with_max(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.max_zoom = 2
-        flatgeobuf.min_zoom = 1
-        assert flatgeobuf.min_zoom == 1
-
-    @staticmethod
-    def test_min_zoom_setter_bad_value(flatgeobuf: FlatGeobuf) -> None:
-        with pytest.raises(ValueError):
-            flatgeobuf.min_zoom = 0
-
-    @staticmethod
-    def test_min_zoom_setter_bad_value_max(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.max_zoom = 2
-        with pytest.raises(ValueError):
-            flatgeobuf.min_zoom = 3
-
-    @staticmethod
-    def test_max_zoom(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.max_zoom = 2
-        assert flatgeobuf.max_zoom == 2
-
-    @staticmethod
-    def test_max_zoom_with_min(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.min_zoom = 1
-        flatgeobuf.max_zoom = 2
-        assert flatgeobuf.max_zoom == 2
-
-    @staticmethod
-    def test_max_zoom_setter_bad_value(flatgeobuf: FlatGeobuf) -> None:
-        with pytest.raises(ValueError):
-            flatgeobuf.max_zoom = 0
-
-    @staticmethod
-    def test_max_zoom_stter_bad_value_min(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.min_zoom = 2
-        with pytest.raises(ValueError):
-            flatgeobuf.max_zoom = 1
-
-    @staticmethod
-    def test_cfg_path(flatgeobuf: FlatGeobuf) -> None:
-        assert flatgeobuf.cfg_path is None
-
-    @staticmethod
-    def test_cfg_path_setter(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.cfg_path = "src/cloudtile/tiles_config.yaml"
-        assert (
-            flatgeobuf.cfg_path
-            == Path("src/cloudtile/tiles_config.yaml").resolve()
-        )
-
-    @staticmethod
-    def test_cfg_path_setter_no_exists(flatgeobuf: FlatGeobuf) -> None:
-        with pytest.raises(FileNotFoundError):
-            flatgeobuf.cfg_path = "src/cloudtile/tiles_config_no_exists.yaml"
-
-    @staticmethod
-    def test_set_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.set_zoom_levels(1, 2)
-        assert flatgeobuf.min_zoom == 1
-        assert flatgeobuf.max_zoom == 2
-
-    @staticmethod
-    def test_set_zoom_levels_bad_value(flatgeobuf: FlatGeobuf) -> None:
-        with pytest.raises(ValueError):
-            flatgeobuf.set_zoom_levels(2, 1)
-
-    @staticmethod
     @patch("subprocess.run")
     def test_convert(mock_run: MagicMock, flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.set_zoom_levels(5, 6)
-        result = flatgeobuf.convert()
+        result = flatgeobuf.convert(minimum_zoom=5, maximum_zoom=6)
         mock_run.assert_called_once_with(
             [
                 "tippecanoe",
+                "--force",
                 "--read-parallel",
                 "--coalesce-densest-as-needed",
-                "--coalesce-smallest-as-needed",
                 "--simplification=10",
                 "--maximum-tile-bytes=2500000",
                 "--maximum-tile-features=20000",
-                "--force",
+                "--no-tile-compression",
                 "--minimum-zoom=5",
                 "--maximum-zoom=6",
                 "-o",
@@ -233,42 +163,42 @@ class TestFlatGeobuf:
         assert result.fname == "test-5-6.pmtiles"
 
     @staticmethod
+    @patch("subprocess.run")
+    def test_convert_with_tc_settings(
+        mock_run: MagicMock, flatgeobuf: FlatGeobuf
+    ) -> None:
+        flatgeobuf.override_tc_settings(minimum_zoom=7, maximum_zoom=9)
+        result = flatgeobuf.convert(minimum_zoom=5, maximum_zoom=6)
+        mock_run.assert_called_once_with(
+            [
+                "tippecanoe",
+                "--force",
+                "--read-parallel",
+                "--coalesce-densest-as-needed",
+                "--simplification=10",
+                "--maximum-tile-bytes=2500000",
+                "--maximum-tile-features=20000",
+                "--no-tile-compression",
+                "--minimum-zoom=7",
+                "--maximum-zoom=9",
+                "-o",
+                str(Path("tests/test-7-9.pmtiles")),
+                str(Path("tests/test.fgb")),
+            ],
+            check=True,
+        )
+        assert isinstance(result, PMTiles)
+        assert result.fname == "test-7-9.pmtiles"
+
+    @staticmethod
     def test_convert_no_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
-        with pytest.raises(AttributeError):
+        with pytest.raises(TypeError):
             flatgeobuf.convert()
 
     @staticmethod
     def test_get_result_fname(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.set_zoom_levels(5, 6)
+        flatgeobuf.override_tc_settings(minimum_zoom=5, maximum_zoom=6)
         assert flatgeobuf._get_result_fname() == "test-5-6.pmtiles"
-
-    @staticmethod
-    def test_read_config(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.cfg_path = "src/cloudtile/tiles_config.yaml"
-        cfg = flatgeobuf._read_config()
-        assert cfg == {
-            "read-parallel": True,
-            "coalesce-densest-as-needed": True,
-            "coalesce-smallest-as-needed": True,
-            "simplification": 10,
-            "maximum-tile-bytes": 2500000,
-            "maximum-tile-features": 20000,
-            "force": True,
-        }
-
-    @staticmethod
-    def test_convert_to_list_args(flatgeobuf: FlatGeobuf) -> None:
-        cfg = flatgeobuf._read_config()
-        arglist = flatgeobuf._convert_to_list_args(cfg)
-        assert arglist == [
-            "--read-parallel",
-            "--coalesce-densest-as-needed",
-            "--coalesce-smallest-as-needed",
-            "--simplification=10",
-            "--maximum-tile-bytes=2500000",
-            "--maximum-tile-features=20000",
-            "--force",
-        ]
 
 
 class TestPMTiles:
