@@ -161,41 +161,13 @@ class TestFlatGeobuf:
 
     @staticmethod
     def test_convert_no_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
-        with pytest.raises(AttributeError):
+        with pytest.raises(TypeError):
             flatgeobuf.convert()
 
     @staticmethod
     def test_get_result_fname(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.set_zoom_levels(5, 6)
+        flatgeobuf.override_tc_settings(minimum_zoom=5, maximum_zoom=6)
         assert flatgeobuf._get_result_fname() == "test-5-6.pmtiles"
-
-    @staticmethod
-    def test_read_config(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.cfg_path = "src/cloudtile/tiles_config.yaml"
-        cfg = flatgeobuf._read_config()
-        assert cfg == {
-            "read-parallel": True,
-            "coalesce-densest-as-needed": True,
-            "simplification": 10,
-            "maximum-tile-bytes": 2500000,
-            "maximum-tile-features": 20000,
-            "no-tile-compression": True,
-            "force": True,
-        }
-
-    @staticmethod
-    def test_convert_to_list_args(flatgeobuf: FlatGeobuf) -> None:
-        cfg = flatgeobuf._read_config()
-        arglist = flatgeobuf._convert_to_list_args(cfg)
-        assert arglist == [
-            "--read-parallel",
-            "--coalesce-densest-as-needed",
-            "--simplification=10",
-            "--maximum-tile-bytes=2500000",
-            "--maximum-tile-features=20000",
-            "--no-tile-compression",
-            "--force",
-        ]
 
 
 class TestPMTiles:
