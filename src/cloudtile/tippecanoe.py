@@ -49,8 +49,8 @@ class TippecanoeSettings(UserDict):
                     )
 
         if key == "minimum-zoom":
-            if self.get(["maximum-zoom"] != "g", None):
-                if "maximum-zoom" in self and value > self["maximum-zoom"]:
+            if "maximum-zoom" in self and self["maximum-zoom"] != "g":
+                if value > self["maximum-zoom"]:
                     raise ValueError(
                         "Minimum zoom cannot be greater than maximum zoom."
                     )
