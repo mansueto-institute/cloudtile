@@ -11,6 +11,7 @@ Created on Wednesday, 31st December 1969 7:00:00 pm
 from dataclasses import dataclass, field
 
 from cloudtile.geofile import FlatGeobuf, GeoFile, PMTiles, VectorFile
+from cloudtile.tippecanoe import TippecanoeSettings
 
 
 @dataclass
@@ -51,14 +52,7 @@ class Converter:
         the files are being downloaded and uploaded from S3 the local temp
         files are deleted afterwards.
         """
-        if isinstance(self.origin, FlatGeobuf):
-            self.origin.set_zoom_levels(
-                min_zoom=kwargs["min_zoom"], max_zoom=kwargs["max_zoom"]
-            )
-            if kwargs["config"] is not None:
-                self.origin.cfg_path = kwargs["config"]
-
-        result = self.origin.convert()
+        result = self.origin.convert(**kwargs)
 
         if self.remote:
             result.upload()
@@ -86,13 +80,12 @@ class Converter:
                 "with a VectorFile or a FlatGeobuf file."
             )
 
-        fgb.set_zoom_levels(
-            min_zoom=kwargs["min_zoom"], max_zoom=kwargs["max_zoom"]
-        )
         if kwargs["config"] is not None:
-            fgb.cfg_path = kwargs["config"]
+            fgb.tc_settings = TippecanoeSettings(cfg_path=kwargs.pop("config"))
+        kwargs.pop("config")
+        fgb.override_tc_settings(**kwargs)
 
-        pmtiles: PMTiles = fgb.convert()
+        pmtiles: PMTiles = fgb.convert(**kwargs)
         if not isinstance(self.origin, FlatGeobuf):
             fgb.remove()
 
