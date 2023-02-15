@@ -199,7 +199,7 @@ class FlatGeobuf(GeoFile):
                 str(self.fpath),
             ]
         )
-
+        logger.info("Tippecanoe call: %s", " ".join(tip_args))
         subprocess.run(tip_args, check=True)
         result: PMTiles = PMTiles(str(out_path))
         result.fname = self._get_result_fname()
