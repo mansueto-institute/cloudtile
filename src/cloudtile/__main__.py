@@ -142,9 +142,17 @@ class CloudTileCLI:
         for arg, argval in cli_args.items():
             if arg in {"memory", "storage"}:
                 continue
-            if not isinstance(argval, bool) and argval is not None:
+            if arg == "tc_kwargs":
+                tc_settings = ["--tc-kwargs"]
+                for k, v in argval.items():
+                    if isinstance(v, bool):
+                        tc_settings.append(f"{k}")
+                    else:
+                        tc_settings.append(f"{k}={v}")
+            elif not isinstance(argval, bool) and argval is not None:
                 args.append(str(argval))
         args.append("--s3")
+        args.append(" ".join(tc_settings))
         return args
 
 
