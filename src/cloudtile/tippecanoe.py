@@ -94,7 +94,6 @@ class TippecanoeSettings(UserDict):
     def _read_yaml_config(
         cfg_path: Optional[str] = None, read_all: bool = False
     ) -> dict[str, Any]:
-
         if cfg_path is None:
             with open_text("cloudtile", "tippecanoe.yaml") as f:
                 data: str = f.read()
