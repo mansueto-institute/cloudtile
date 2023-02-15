@@ -368,6 +368,10 @@ class ParseTCKwargs(Action):
                 key, value = value, True
             else:
                 key, value = map(str.strip, value.split("="))
+                if value == "True":
+                    value = True
+                elif value == "False":
+                    value = False
             getattr(namespace, self.dest)[key] = value
 
 
