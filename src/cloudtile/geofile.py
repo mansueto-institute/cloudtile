@@ -31,16 +31,25 @@ class GeoFile(ABC):
     Represents an instance of a remote geofile.
     """
 
-    fpath_str: str = field(repr=False)
-    fpath: Path = field(init=False)
-    fname: str = field(init=False)
+    fpath_str: InitVar[str] = field(repr=False)
+    location: FilePath = field(init=False)
 
-    def __post_init__(self):
-        fpath = Path(self.fpath_str)
-        if not fpath.exists():
-            raise FileNotFoundError(f"{fpath} not found")
-        self.fpath = fpath
-        self.fname = self.fpath.name
+    def __post_init__(self, fpath_str: str):
+        self.location = FilePath(fpath_str)
+        if "." not in self.target_suffix:
+            raise ValueError(
+                f"Target suffix {self.target_suffix} must include the dot."
+            )
+
+    @property
+    @abstractmethod
+    def target_suffix(self) -> str:
+        """
+        The conversion target suffix for the file. For example ".fgb"
+
+        Returns:
+            str: The target suffix for the file.
+        """
 
     @property
     def suffix(self) -> str:
@@ -51,6 +60,26 @@ class GeoFile(ABC):
             str: the file name's suffix.
         """
         return self.fpath.suffix[1:]
+
+    @property
+    def fpath(self) -> Path:
+        """
+        The file's path.
+
+        Returns:
+            Path: The file's path.
+        """
+        return self.location.fpath
+
+    @property
+    def fname(self) -> str:
+        """
+        The file's name.
+
+        Returns:
+            str: The file's name.
+        """
+        return self.location.fname
 
     @abstractmethod
     def convert(self, **kwargs) -> GeoFile:
@@ -94,7 +123,6 @@ class GeoFile(ABC):
         s3 = S3Storage()
         tmp_path = s3.download_file(file_key=file_key, prefix=fpath.suffix[1:])
         result = cls(str(tmp_path), **kwargs)
-        result.fname = file_key
         return result
 
 
@@ -107,8 +135,8 @@ class VectorFile(GeoFile):
 
     ALLOWED_SUFFIXES: ClassVar[set[str]] = {"geojson", "gpkg", "parquet"}
 
-    def __post_init__(self):
-        super().__post_init__()
+    def __post_init__(self, fpath_str: str):
+        super().__post_init__(fpath_str)
         if self.suffix not in self.ALLOWED_SUFFIXES:
             error_msg = (
                 f"File type {self.suffix} must be in {self.ALLOWED_SUFFIXES}"
@@ -116,8 +144,12 @@ class VectorFile(GeoFile):
             logger.error(error_msg)
             raise ValueError(error_msg)
 
+    @property
+    def target_suffix(self) -> str:
+        return ".fgb"
+
     def convert(self, **kwargs) -> FlatGeobuf:
-        out_path = Path(self.fpath.parent.joinpath(self.fpath.stem + ".fgb"))
+        out_path = self.location.get_output_path(self)
         ogr_args = (
             "ogr2ogr",
             "-f",
@@ -128,10 +160,6 @@ class VectorFile(GeoFile):
         )
         subprocess.run(ogr_args, check=True)
         result = FlatGeobuf(str(out_path))
-        result.fname = self.fname
-        result.fname = result.fname.replace(
-            "".join((".", self.suffix)), ".fgb"
-        )
         return result
 
 
@@ -144,10 +172,14 @@ class FlatGeobuf(GeoFile):
     cfg_path: InitVar[Optional[str]] = field(repr=False, default=None)
     tc_override: dict[str, Any] = field(default_factory=dict, repr=False)
 
-    def __post_init__(self, cfg_path: Optional[str] = None):
-        super().__post_init__()
+    def __post_init__(self, fpath_str: str, cfg_path: Optional[str] = None):
+        super().__post_init__(fpath_str=fpath_str)
         self.tc_settings = TippecanoeSettings(cfg_path=cfg_path)
         self.override_tc_settings(**self.tc_override)
+
+    @property
+    def target_suffix(self) -> str:
+        return ".pmtiles"
 
     def override_tc_settings(self, **kwargs) -> None:
         """
@@ -168,7 +200,11 @@ class FlatGeobuf(GeoFile):
         if "maximum-zoom" not in self.tc_settings:
             self.tc_settings["maximum-zoom"] = max_zoom
 
-        out_path = Path(self.fpath.parent.joinpath(self._get_result_fname()))
+        out_path = self.location.get_output_path(
+            self,
+            self.tc_settings["minimum-zoom"],
+            self.tc_settings["maximum-zoom"],
+        )
         tip_args: list[str] = ["tippecanoe"]
         tip_args.extend(self.tc_settings.convert_to_list_args())
         tip_args.extend(
@@ -181,26 +217,6 @@ class FlatGeobuf(GeoFile):
         logger.info("Tippecanoe call: %s", " ".join(tip_args))
         subprocess.run(tip_args, check=True)
         result: PMTiles = PMTiles(str(out_path))
-        result.fname = self._get_result_fname()
-        return result
-
-    def _get_result_fname(self) -> str:
-        """
-        Transforms the fgb filename into an mbtile filename with the
-        conversion zooms in the name.
-
-        Returns:
-            str: The result file name
-        """
-        fname = self.fname
-        fname = fname.replace(".fgb", "")
-        result = "-".join(
-            (
-                fname,
-                str(self.tc_settings["minimum-zoom"]),
-                str(self.tc_settings["maximum-zoom"]) + ".pmtiles",
-            )
-        )
         return result
 
 
