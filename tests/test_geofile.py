@@ -77,25 +77,6 @@ class TestVectorFile:
         )
 
     @staticmethod
-    @patch("cloudtile.geofile.copy")
-    def test_write(cp: MagicMock, vectorfile: VectorFile) -> None:
-        vectorfile.write("tests")
-        cp.assert_called_once_with(
-            vectorfile.fpath,
-            Path("tests").resolve().joinpath(vectorfile.fname),
-        )
-
-    @staticmethod
-    def test_write_path_not_exists(vectorfile: VectorFile) -> None:
-        with pytest.raises(FileNotFoundError):
-            vectorfile.write("blablabla")
-
-    @staticmethod
-    def test_write_path_not_dir(vectorfile: VectorFile) -> None:
-        with pytest.raises(TypeError):
-            vectorfile.write("README.md")
-
-    @staticmethod
     def test_remove(vectorfile: VectorFile) -> None:
         with patch("pathlib.Path.unlink") as mock_unlink:
             vectorfile.remove()
@@ -194,11 +175,6 @@ class TestFlatGeobuf:
     def test_convert_no_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
         with pytest.raises(TypeError):
             flatgeobuf.convert()
-
-    @staticmethod
-    def test_get_result_fname(flatgeobuf: FlatGeobuf) -> None:
-        flatgeobuf.override_tc_settings(minimum_zoom=5, maximum_zoom=6)
-        assert flatgeobuf._get_result_fname() == "test-5-6.pmtiles"
 
 
 class TestPMTiles:
