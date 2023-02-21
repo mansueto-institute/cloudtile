@@ -79,8 +79,6 @@ class CloudTileCLI:
                 origin = Converter.load_file(
                     origin_str=self.args.filename, remote=True
                 )
-                origin.write(path_str=self.args.directory)
-                origin.remove()
         elif self.args.subcommand == "convert":
             if self.args.convert_subcommand is None:
                 self.convert_parser.print_usage()

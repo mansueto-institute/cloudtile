@@ -9,7 +9,6 @@ Created on Saturday, 12th November 2022 1:06:43 pm
 ===============================================================================
 """
 import logging
-import tempfile
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
@@ -68,15 +67,8 @@ class S3Storage:
         if "." not in file_key:
             raise ValueError("You must specify the file suffix")
 
-        tmpfile = tempfile.NamedTemporaryFile(
-            suffix="".join((".", file_key.split(".")[-1])), delete=False
-        )
-
-        # this is to release for the os so that it can write
-        tmpfile.close()
-
+        local_path = Path(file_key)
         s3_client = self.s3_client
-
         try:
             s3 = boto3.resource("s3")
             file_object = s3.Object(
@@ -93,7 +85,7 @@ class S3Storage:
                 s3_client.download_file(
                     self.bucket_name,
                     "/".join((prefix, file_key)),
-                    tmpfile.name,
+                    local_path.name,
                     Callback=self._tqdm_hook(t),
                 )
         except ClientError as e:
@@ -104,7 +96,7 @@ class S3Storage:
             logger.error(e)
             raise e from e
 
-        return Path(tmpfile.name)
+        return local_path
 
     def upload_file(
         self, file_path: str, prefix: str = "", key_name: Optional[str] = None
