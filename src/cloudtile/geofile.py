@@ -210,5 +210,52 @@ class PMTiles(GeoFile):
     Class that represents a PMTiles tileset file.
     """
 
+    @property
+    def target_suffix(self) -> str:
+        return ".pmtiles"
+
     def convert(self, **kwargs) -> GeoFile:
         raise NotImplementedError("PMTiles conversion is not implemented.")
+
+
+@dataclass
+class FilePath:
+    """Represents the location of a GeoFile.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+
+    Attributes:
+        fpath_str (str): The path to the file.
+        fname (str): The file name.
+    """
+
+    fpath_str: InitVar[str] = field(repr=False)
+    fpath: Path = field(init=False)
+
+    def __post_init__(self, fpath_str: str):
+        self.fpath = Path(fpath_str)
+        if not self.fpath.exists():
+            raise FileNotFoundError(f"File {self.fpath} does not exist.")
+
+    @property
+    def fname(self) -> str:
+        """The name property of the file path."""
+        return self.fpath.name
+
+    def get_output_path(self, origin: GeoFile, *args) -> Path:
+        """
+        Returns the output path for the file.
+
+        Args:
+            suffix (str): The suffix to append to the file name. It has to be
+                something like .fgb or fgb
+
+        Returns:
+            Path: The output path
+        """
+        args_in_name = "-" + "-".join(str(arg) for arg in args) if args else ""
+        new_fname = "".join(
+            (self.fpath.stem, args_in_name, origin.target_suffix)
+        )
+        return self.fpath.parent / new_fname
