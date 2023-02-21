@@ -17,7 +17,6 @@ import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import InitVar, dataclass, field
 from pathlib import Path
-from shutil import copy
 from typing import Any, ClassVar, Optional
 
 from cloudtile.s3 import S3Storage
@@ -71,26 +70,6 @@ class GeoFile(ABC):
         s3.upload_file(
             file_path=str(self.fpath), prefix=self.suffix, key_name=self.fname
         )
-
-    def write(self, path_str: str) -> None:
-        """
-        Writes the file to a local directory passed in.
-
-        Args:
-            path_str (str): The directory where in to save the file. The name
-                is not passed, as it is a property of the file itself.
-
-        Raises:
-            FileNotFoundError: If the directory is not found.
-            TypeError: If the path points to something that is not a directory.
-        """
-        path = Path(path_str).resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"Folder {path} does not exist.")
-        if not path.is_dir():
-            raise TypeError(f"{path} is not a directory.")
-        logger.info("Writing %s to %s", self, path.joinpath(self.fname))
-        copy(self.fpath, path.joinpath(self.fname))
 
     def remove(self):
         """
