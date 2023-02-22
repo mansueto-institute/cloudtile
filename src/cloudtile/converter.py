@@ -80,12 +80,6 @@ class Converter:
                 "with a VectorFile or a FlatGeobuf file."
             )
 
-        if kwargs["config"] is not None:
-            fgb.tc_settings = TippecanoeSettings(cfg_path=kwargs.pop("config"))
-        if "config" in kwargs:
-            kwargs.pop("config")
-        fgb.override_tc_settings(**kwargs)
-
         pmtiles: PMTiles = fgb.convert(**kwargs)
         if not isinstance(self.origin, FlatGeobuf):
             fgb.remove()
