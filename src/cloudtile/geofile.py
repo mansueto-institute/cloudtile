@@ -186,24 +186,40 @@ class FlatGeobuf(GeoFile):
         Overrides any settings already set in the TippecanoeSettings object.
         Otherwise the new settings are added.
         """
+        if "config" in kwargs:
+            kwargs.pop("config")
         self.tc_settings.update(kwargs)
 
     def convert(self, **kwargs) -> PMTiles:
-        try:
-            min_zoom, max_zoom = kwargs["minimum_zoom"], kwargs["maximum_zoom"]
-        except KeyError as e:
+        if "minimum_zoom" not in kwargs or "maximum_zoom" not in kwargs:
             raise TypeError(
                 "minimum_zoom and maximum_zoom must be passed as kwargs."
-            ) from e
+            )
+        min_zoom, max_zoom = kwargs.pop("minimum_zoom"), kwargs.pop(
+            "maximum_zoom"
+        )
+
+        if "config" in kwargs and kwargs["config"] is not None:
+            self.tc_settings = TippecanoeSettings(
+                cfg_path=kwargs.pop("config")
+            )
+
         if "minimum-zoom" not in self.tc_settings:
             self.tc_settings["minimum-zoom"] = min_zoom
         if "maximum-zoom" not in self.tc_settings:
             self.tc_settings["maximum-zoom"] = max_zoom
 
+        if "suffix" in kwargs:
+            suffix = kwargs.pop("suffix")
+        else:
+            suffix = ""
+        self.override_tc_settings(**kwargs)
+
         out_path = self.location.get_output_path(
             self,
             self.tc_settings["minimum-zoom"],
             self.tc_settings["maximum-zoom"],
+            suffix,
         )
         tip_args: list[str] = ["tippecanoe"]
         tip_args.extend(self.tc_settings.convert_to_list_args())
