@@ -280,13 +280,16 @@ class FilePath:
         Returns the output path for the file.
 
         Args:
-            suffix (str): The suffix to append to the file name. It has to be
-                something like .fgb or fgb
+            origin (GeoFile): The origin file.
 
         Returns:
             Path: The output path
         """
-        args_in_name = "-" + "-".join(str(arg) for arg in args) if args else ""
+        args_in_name = (
+            "-" + "-".join(str(arg) for arg in args if arg != "")
+            if args
+            else ""
+        )
         new_fname = "".join(
             (self.fpath.stem, args_in_name, origin.target_suffix)
         )

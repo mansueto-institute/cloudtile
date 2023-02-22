@@ -42,6 +42,19 @@ class TestGeoFile:
         with pytest.raises(TypeError):
             GeoFile("")  # pylint: disable=abstract-class-instantiated
 
+    @staticmethod
+    def test_bad_subclassing() -> None:
+        class BadSubclass(GeoFile):
+            @property
+            def target_suffix(self) -> str:
+                return "badsuffix"
+
+            def convert(self, **kwargs) -> GeoFile:
+                pass
+
+        with pytest.raises(ValueError):
+            BadSubclass("tests/test.fgb")
+
 
 class TestVectorFile:
     """
@@ -144,6 +157,31 @@ class TestFlatGeobuf:
         assert result.fname == "test-5-6.pmtiles"
 
     @staticmethod
+    @patch("cloudtile.geofile.FilePath", MagicMock())
+    @patch("subprocess.run", MagicMock())
+    @patch("cloudtile.geofile.TippecanoeSettings")
+    def test_convert_with_config(
+        mock_tc_settings: MagicMock,
+        flatgeobuf: FlatGeobuf,
+    ) -> None:
+        flatgeobuf.convert(
+            minimum_zoom=5, maximum_zoom=6, config="tests/test.json"
+        )
+        mock_tc_settings.assert_called_once_with(cfg_path="tests/test.json")
+
+    @staticmethod
+    @patch("subprocess.run", MagicMock())
+    @patch("cloudtile.geofile.FilePath")
+    def test_convert_with_suffix(
+        mock_fp: MagicMock, flatgeobuf: FlatGeobuf
+    ) -> None:
+        flatgeobuf.location = mock_fp
+        flatgeobuf.convert(minimum_zoom=5, maximum_zoom=6, suffix="test")
+        mock_fp.get_output_path.assert_called_once_with(
+            flatgeobuf, 5, 6, "test"
+        )
+
+    @staticmethod
     @patch("subprocess.run")
     def test_convert_with_tc_settings(
         mock_run: MagicMock, flatgeobuf: FlatGeobuf
@@ -175,6 +213,14 @@ class TestFlatGeobuf:
     def test_convert_no_zoom_levels(flatgeobuf: FlatGeobuf) -> None:
         with pytest.raises(TypeError):
             flatgeobuf.convert()
+
+    @staticmethod
+    def test_override_tc_settings(flatgeobuf: FlatGeobuf) -> None:
+        flatgeobuf.override_tc_settings(
+            minimum_zoom=7, maximum_zoom=9, config="test"
+        )
+        assert flatgeobuf.tc_settings["minimum-zoom"] == 7
+        assert flatgeobuf.tc_settings["maximum-zoom"] == 9
 
 
 class TestPMTiles:
