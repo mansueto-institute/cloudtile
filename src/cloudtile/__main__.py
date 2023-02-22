@@ -115,6 +115,10 @@ class CloudTileCLI:
                         self.args.minimum_zoom = None
                     if "maximum_zoom" not in self.args:
                         self.args.maximum_zoom = None
+                    if "tc_kwargs" not in self.args:
+                        self.args.tc_kwargs = {}
+                    if "suffix" not in self.args:
+                        self.args.suffix = ""
 
                     if self.args.convert_subcommand == "single-step":
                         converter.single_step_convert(
@@ -122,12 +126,15 @@ class CloudTileCLI:
                             maximum_zoom=self.args.maximum_zoom,
                             config=self.args.config,
                             **self.args.tc_kwargs,
+                            suffix=self.args.suffix,
                         )
                     else:
                         converter.convert(
                             minimum_zoom=self.args.minimum_zoom,
                             maximum_zoom=self.args.maximum_zoom,
                             config=self.args.config,
+                            **self.args.tc_kwargs,
+                            suffix=self.args.suffix,
                         )
                 except ValueError as e:
                     self.parser.error(e)
@@ -257,6 +264,17 @@ class ConvertParser:
             type=lambda x: int(x) if x != "g" else x,
             help="The maximum zoom level to use in the conversion",
             default=None,
+        )
+        parser.add_argument(
+            "--suffix",
+            "-s",
+            help=(
+                "Add a suffix to the output file. This is useful if you want "
+                "to differentiate between different settings for the same "
+                "file. For example, passing --suffix=myfile will result in "
+                "the file being named myfile-minzoom-maxzoom-myfile.pmtiles"
+            ),
+            default=""
         )
         parser.add_argument(
             "--config",
