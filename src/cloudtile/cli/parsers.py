@@ -104,7 +104,7 @@ class ConvertParser:
         )
         parser.add_argument(
             "maximum_zoom",
-            type=lambda x: int(x) if x != "g" else x,
+            type=ConvertParser._parse_maximum_zoom,
             help="The maximum zoom level to use in the conversion",
             default=None,
         )
@@ -143,6 +143,12 @@ class ConvertParser:
             default={},
         )
 
+    @staticmethod
+    def _parse_maximum_zoom(value: str) -> Union[int, str]:
+        if value == "g":
+            return value
+        return int(value)
+
 
 class ManageParser:
     """
@@ -162,8 +168,8 @@ class ManageParser:
             help="The management actions available",
             metavar="management",
         )
-        cls._build_upload_parser(subparsers)
-        cls._build_download_parser(subparsers)
+        cls._build_upload_parser(parser=subparsers)
+        cls._build_download_parser(parser=subparsers)
 
     @staticmethod
     def _build_upload_parser(parser: _SubParsersAction) -> None:
@@ -216,7 +222,7 @@ class ParseTCKwargs(Action):
         values: Optional[Union[str, Sequence[Any]]],
         option_string: Optional[str] = None,
     ) -> None:
-        if values is None:
+        if values is None:  # pragma: no cover
             raise ValueError("No values passed to ParseKwargs")
         setattr(namespace, self.dest, {})
         for value in values:
