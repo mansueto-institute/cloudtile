@@ -154,6 +154,9 @@ class CloudTileCLI:
                         tc_settings.append(f"{k}")
                     else:
                         tc_settings.append(f"{k}={v}")
+            elif arg == "suffix":
+                args.append("--suffix")
+                args.append(argval)
             elif not isinstance(argval, bool) and argval is not None:
                 args.append(str(argval))
         args.append("--s3")
