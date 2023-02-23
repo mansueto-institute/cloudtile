@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cloudtile.cli.parsers import ConvertParser, ManageParser
+from cloudtile.cli.parsers import ConvertParser, ManageParser, ParseTCKwargs
 
 
 @pytest.fixture
@@ -21,6 +21,7 @@ def parser() -> Generator[ArgumentParser, None, None]:
 
 class TestConvertParser:
     """Unit tests for the ConvertParser class"""
+
     @pytest.fixture
     def subparser(
         self, parser: ArgumentParser
@@ -89,7 +90,7 @@ class TestConvertParser:
         ConvertParser._add_std_args.assert_called_once_with(ssparser)
         ConvertParser._add_fgb_args.assert_called_once_with(ssparser)
 
-    @patch("cloudtile.cli.parsers.ArgumentParser")
+    @patch("cloudtile.cli.parsers.ArgumentParser", spec=ArgumentParser)
     def test_add_std_args(self, mock_parser: MagicMock) -> None:
         mock_exc_group = MagicMock(name="mutually_exclusive_group")
         mock_parser.add_mutually_exclusive_group.return_value = mock_exc_group
@@ -109,3 +110,53 @@ class TestConvertParser:
         value: Union[str, int],
     ) -> None:
         assert ConvertParser._parse_maximum_zoom(value) == expected
+
+
+class TestManageParser:
+    """Unit tests for the ManageParser class"""
+
+    @patch.object(ManageParser, "_build_upload_parser", MagicMock())
+    @patch.object(ManageParser, "_build_download_parser", MagicMock())
+    def test_build_parser(self, parser: ArgumentParser) -> None:
+        ManageParser.build_parser(parser)
+        ManageParser._build_upload_parser.assert_called_once_with(
+            parser=parser._subparsers._group_actions[0]  # type: ignore
+        )
+        ManageParser._build_download_parser.assert_called_once_with(
+            parser=parser._subparsers._group_actions[0]  # type: ignore
+        )
+
+    @patch("cloudtile.cli.parsers._SubParsersAction", spec=_SubParsersAction)
+    def test_build_upload_parser(self, parser: MagicMock) -> None:
+        subparser = MagicMock(spec=ArgumentParser)
+        parser.add_parser.return_value = subparser
+        ManageParser._build_upload_parser(parser=parser)
+        parser.add_parser.assert_called_once()
+        subparser.add_argument.assert_called_once()
+
+    @patch("cloudtile.cli.parsers._SubParsersAction", spec=_SubParsersAction)
+    def test_build_download_parser(self, parser: MagicMock) -> None:
+        subparser = MagicMock(spec=ArgumentParser)
+        parser.add_parser.return_value = subparser
+        ManageParser._build_download_parser(parser=parser)
+        parser.add_parser.assert_called_once()
+        assert subparser.add_argument.call_count == 2
+
+
+class TestParseTCKwargs:
+    """Unit tests for the ParseTCKwargs class"""
+
+    @pytest.mark.parametrize(
+        "expected,actual",
+        [
+            ({"name": "test"}, "name=test"),
+            ({"boolean": True}, "boolean"),
+            ({"boolean": False}, "boolean=False"),
+            ({"boolean": True}, "boolean=True"),
+        ],
+    )
+    def test_call(self, expected: dict, actual: str) -> None:
+        parser = ArgumentParser()
+        parser.add_argument("--tc-kwargs", action=ParseTCKwargs, nargs="+")
+        args = parser.parse_args(["--tc-kwargs", actual])
+        assert args.tc_kwargs == expected
