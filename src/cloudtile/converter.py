@@ -11,7 +11,6 @@ Created on Wednesday, 31st December 1969 7:00:00 pm
 from dataclasses import dataclass, field
 
 from cloudtile.geofile import FlatGeobuf, GeoFile, PMTiles, VectorFile
-from cloudtile.tippecanoe import TippecanoeSettings
 
 
 @dataclass

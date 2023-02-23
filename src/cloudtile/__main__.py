@@ -277,7 +277,7 @@ class ConvertParser:
                 "file. For example, passing --suffix=myfile will result in "
                 "the file being named myfile-minzoom-maxzoom-myfile.pmtiles"
             ),
-            default=""
+            default="",
         )
         parser.add_argument(
             "--config",
