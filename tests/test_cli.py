@@ -10,4 +10,3 @@ from cloudtile.__main__ import CloudTileCLI
 @pytest.fixture
 def cli():
     return CloudTileCLI()
-
