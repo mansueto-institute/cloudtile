@@ -199,10 +199,17 @@ def test_get_default_security_group_bad_lookup(
 
 def test_parse_cli_args(ecstask: ECSTask) -> None:
     assert ecstask._parse_cli_args(
-        ["test", "test", "--tc-kwargs one=one =two=two three"]
+        [
+            "test",
+            "test",
+            "--suffix myfile",
+            "--tc-kwargs one=one =two=two three",
+        ]
     ) == [
         "test",
         "test",
+        "--suffix",
+        "myfile",
         "--tc-kwargs",
         "one=one",
         "=two=two",
