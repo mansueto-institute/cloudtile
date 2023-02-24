@@ -59,7 +59,6 @@ class CloudTileCLI:
         if self.args.subcommand is None:
             if self.args.version:
                 print(f"cloudtile version: {metadata.version('cloudtile')}")
-                sys.exit(0)
             else:
                 self.parser.print_usage()
         elif self.args.subcommand == "manage":
@@ -72,7 +71,9 @@ class CloudTileCLI:
                 origin = Converter.load_file(
                     origin_str=self.args.filename, remote=True
                 )
-        elif self.args.subcommand == "convert":
+            else:
+                self.manage_parser.print_help()
+        elif self.args.subcommand == "convert":  # pragma: no cover
             if self.args.convert_subcommand is None:
                 self.convert_parser.print_usage()
                 sys.exit()
@@ -144,12 +145,14 @@ class CloudTileCLI:
                 tc_settings = ["--tc-kwargs"]
                 for k, v in argval.items():
                     if isinstance(v, bool):
-                        tc_settings.append(f"{k}")
+                        if v:
+                            tc_settings.append(f"{k}")
                     else:
                         tc_settings.append(f"{k}={v}")
             elif arg == "suffix":
-                args.append("--suffix")
-                args.append(argval)
+                if argval != "":
+                    args.append("--suffix")
+                    args.append(argval)
             elif not isinstance(argval, bool) and argval is not None:
                 args.append(str(argval))
         args.append("--s3")
