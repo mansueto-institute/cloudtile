@@ -8,7 +8,7 @@ Python tool for converting vector file formats to pmtiles files by scheduling jo
 
 - Convert (either locally, on a docker file, or on AWS ECS)
   - `{.geojson, .parquet, .gpkg}` -> `fgb`.
-  - `.pmtiles` -> `.pmtiles`.
+  - `.fgb` -> `.pmtiles`.
 - Upload files to S3
 - Download files from S3
 
@@ -63,6 +63,12 @@ You can refer to our [Dockerfile](Dockerfile) to reference installation instruct
 
 We install `gdal` using their Docker image, however if you want to install everything locally, you can install `gdal` via [`conda`](https://gdal.org/download.html#conda) making sure you install the `libgdal-arrow-parquet` if you'd like to convert a file starting from a `.parquet` file.
 
+For example:
+
+```bash
+conda install -c conda-forge gdal libgdal-arrow-parquet
+```
+
 ### Docker
 
 Some of these dependencies are hard to install manually, so instead you can run the the code within a Docker container. You can use the [Dockerfile](Dockerfile) included in the package to first build the Docker image and then run it on a local container.
@@ -94,50 +100,17 @@ Notice in the last example that we are passing AWS credentials as environment va
 The main way of using the package is to use its CLI. After installation, you have access to the CLI via the `cloudtile` command in your terminal. You can get help by passing the `-h` or `--help` flag:
 
 ``` bash
->>> cloudtile -h
-usage: cloudtile manage [-h] management ...
-
-positional arguments:
-  management  The management actions available
-    upload    Uploads a local file to S3
-    download  Downloads a file from S3 a local directory.
-
-optional arguments:
-  -h, --help  show this help message and exit
+cloudtile -h
 ```
 
 You can do the same for sub-commands, for example:
 
 ``` bash
->>> cloudtile manage -h
-usage: cloudtile manage [-h] management ...
-
-positional arguments:
-  management  The management actions available
-    upload    Uploads a local file to S3
-    download  Downloads a file from S3 a local directory.
-
-optional arguments:
-  -h, --help  show this help message and exit
+cloudtile manage -h
 ```
 
 ``` bash
->>> cloudtile convert fgb2pmtiles -h
-usage: cloudtile convert fgb2pmtiles [-h] [--s3 | --ecs] [--memory MEMORY] [--storage STORAGE] [--config CONFIG] filename min_zoom max_zoom
-
-positional arguments:
-  filename           The file name to convert
-  min_zoom           The minimum zoom level to use in the conversion
-  max_zoom           The maximum zoom level to use in the conversion
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --s3               Whether to use a remote file or use S3
-  --ecs              Whether to run the entire job on AWS ECS
-  --memory MEMORY    Whether to override the 64GB memory limit. Must be only be used with the --ecs flag. Additionally, the values must be within the range of [32768, 122880] in increments
-                     of 8192.
-  --storage STORAGE  Whether to override the 100GB ephemeral storage default. Must only be used with the --ecs flag. Additionally, values must be within the range of 20 and 200 (GiBs)
-  --config CONFIG    The path to a config file for tippecanoe. If not passed the default config file is used.
+cloudtile convert fgb2pmtiles -h
 ```
 
 ### AWS Credentials
@@ -285,4 +258,12 @@ You can also pass these settings to an [ECS](#fully-remote) task like so:
 
 ``` bash
 cloudtile convert single-step regions_map.parquet 9 g --ecs --tc-kwargs coalesce-densest-as-needed extend-zooms-if-still-dropping visvalingam
+```
+
+### Passing File Suffixes
+
+If you would like to add something extra to your output file so as to differentiate it somehow, for example: your input file is `myfile.parquet`. If you run the single-step conversion using zooms 4 and 9, then the output file name will be `myfile-4-9.pmtiles`. Let's say that you want to name the output file like `myfile-4-9-using-this-setting.pmtiles`, then you can pass the `--suffix` optional argument when calling the convert step like this:
+
+```bash
+cloudtile convert single-step myfile.parquet 4 9 --suffix=using-this-setting
 ```
