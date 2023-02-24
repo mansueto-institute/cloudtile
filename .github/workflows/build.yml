@@ -16,13 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python 3.9
+      - name: Set up Python>=3.9
         uses: actions/setup-python@v4
         with:
           python-version: |
-            "3.9"
-            "3.10"
-            "3.11"
+            3.9
+            3.10
+            3.11
+            3.x
           cache: pip
 
       - name: Install package
