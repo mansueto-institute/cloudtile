@@ -156,5 +156,6 @@ class CloudTileCLI:
             elif not isinstance(argval, bool) and argval is not None:
                 args.append(str(argval))
         args.append("--s3")
-        args.append(" ".join(tc_settings))
+        if len(tc_settings) > 1:
+            args.append(" ".join(tc_settings))
         return args
