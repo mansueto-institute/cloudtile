@@ -241,6 +241,32 @@ class TestConvertSubcommand:
                 "--tc-kwargs visalingam maximum-zoom=g",
             ],
         ],
+        [
+            [
+                "convert",
+                "single-step",
+                "test.parquet",
+                "4",
+                "5",
+                "--ecs",
+                "--memory=1024",
+                "--suffix=test",
+            ],
+            [
+                "convert",
+                "single-step",
+                "test.parquet",
+                "4",
+                "5",
+                "--suffix",
+                "test",
+                "--s3",
+            ],
+        ],
+        [
+            ["convert", "single-step", "test.parquet", "4", "5"],
+            ["convert", "single-step", "test.parquet", "4", "5", "--s3"],
+        ],
     ),
 )
 def test_get_args_for_ecs(args: list[str], expected: list[str]) -> None:
